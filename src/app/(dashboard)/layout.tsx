@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100 bg-radial-gradient">
+    <div className="min-h-screen flex bg-[#050507] text-[#fafafa] studio-mesh">
       {/* Desktop Sidebar */}
       <Sidebar />
 

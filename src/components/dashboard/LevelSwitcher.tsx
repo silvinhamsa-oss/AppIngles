@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User, Users, ChevronDown, Check } from "lucide-react";
+import { User, Users, Check } from "lucide-react";
 import { CEFRLevel } from "@/types/profile";
 
 interface LevelSwitcherProps {
@@ -16,31 +16,31 @@ export function LevelSwitcher({
   onSwitchProfile,
 }: LevelSwitcherProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
+    <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#0f0f15] border border-white/10 rounded-2xl shadow-inner">
       <button
         onClick={() => onSwitchProfile("parent", "B1+")}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
           currentProfile === "parent"
-            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20"
+            : "text-zinc-400 hover:text-white hover:bg-white/5"
         }`}
       >
         <User className="w-3.5 h-3.5" />
         <span>Meu Perfil (Intermediário • B1+)</span>
-        {currentProfile === "parent" && <Check className="w-3 h-3 ml-1 text-indigo-200" />}
+        {currentProfile === "parent" && <Check className="w-3.5 h-3.5 ml-1 text-zinc-950 stroke-[3]" />}
       </button>
 
       <button
         onClick={() => onSwitchProfile("child", "A1")}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
           currentProfile === "child"
-            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            ? "bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20"
+            : "text-zinc-400 hover:text-white hover:bg-white/5"
         }`}
       >
         <Users className="w-3.5 h-3.5" />
         <span>Perfil Filho (Iniciante • A1)</span>
-        {currentProfile === "child" && <Check className="w-3 h-3 ml-1 text-emerald-200" />}
+        {currentProfile === "child" && <Check className="w-3.5 h-3.5 ml-1 text-zinc-950 stroke-[3]" />}
       </button>
     </div>
   );

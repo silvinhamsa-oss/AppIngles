@@ -56,13 +56,12 @@ export function EnglishRadar({
     <div className="flex flex-col items-center justify-center relative">
       <svg width={size} height={size} className="overflow-visible">
         <defs>
-          <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.6" />
-            <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.4" />
+          <linearGradient id="radarGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.5" />
             <stop offset="100%" stopColor="#10b981" stopOpacity="0.3" />
           </linearGradient>
           <filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
@@ -81,10 +80,9 @@ export function EnglishRadar({
               key={i}
               points={ringPoints}
               fill="none"
-              stroke="#334155"
+              stroke="rgba(255, 255, 255, 0.12)"
               strokeWidth="1"
               strokeDasharray={i === rings.length - 1 ? "none" : "3 3"}
-              opacity={0.6}
             />
           );
         })}
@@ -99,9 +97,8 @@ export function EnglishRadar({
               y1={center}
               x2={x}
               y2={y}
-              stroke="#334155"
+              stroke="rgba(255, 255, 255, 0.1)"
               strokeWidth="1"
-              opacity={0.7}
             />
           );
         })}
@@ -109,8 +106,8 @@ export function EnglishRadar({
         {/* User Data Polygon */}
         <polygon
           points={points}
-          fill="url(#radarGradient)"
-          stroke="#818cf8"
+          fill="url(#radarGoldGradient)"
+          stroke="#f59e0b"
           strokeWidth="2.5"
           filter="url(#radarGlow)"
         />
@@ -128,7 +125,7 @@ export function EnglishRadar({
                 cy={vy}
                 r="4.5"
                 fill="#ffffff"
-                stroke="#6366f1"
+                stroke="#f59e0b"
                 strokeWidth="2"
                 className="transition-all duration-300"
               />
@@ -136,7 +133,7 @@ export function EnglishRadar({
                 x={lx}
                 y={ly + 4}
                 textAnchor="middle"
-                className="text-[11px] font-bold fill-slate-300 select-none"
+                className="text-[11px] font-bold fill-white select-none tracking-tight"
               >
                 {s.label}
               </text>
@@ -144,7 +141,7 @@ export function EnglishRadar({
                 x={lx}
                 y={ly + 16}
                 textAnchor="middle"
-                className="text-[10px] font-medium fill-indigo-400 select-none"
+                className="text-[10px] font-bold font-mono fill-amber-400 select-none"
               >
                 {data[s.key]}%
               </text>

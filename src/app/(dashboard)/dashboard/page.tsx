@@ -6,10 +6,9 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
 import { LevelSwitcher } from "@/components/dashboard/LevelSwitcher";
 import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
-import { Card } from "@/components/ui/Card";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CEFRLevel, SkillRadarData } from "@/types/profile";
 import { VocabularyItem } from "@/types/vocabulary";
 import { playPronunciation } from "@/lib/audio";
@@ -18,9 +17,7 @@ import {
   Brain,
   Clock,
   ArrowRight,
-  Flame,
   Volume2,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -102,10 +99,10 @@ export default function DashboardPage() {
       {/* Top Greeting and Multi-Profile Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-zinc-100 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             {profile === "parent" ? "Olá, Welld! 👋" : "Olá, Campeão! 🚀"}
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-[var(--text-muted)] mt-1 font-normal">
             {profile === "parent"
               ? "Pronto para a missão de hoje? Foque em soltar a fala e recuperar palavras."
               : "Vamos avançar nos fundamentos do inglês com calma e diversão!"}
@@ -131,8 +128,8 @@ export default function DashboardPage() {
 
       {/* Quick Action Hub */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-          Ações Rápidas de Aprendizagem
+        <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 font-mono">
+          Ações Rápidas
         </h3>
         <QuickActions />
       </div>
@@ -144,17 +141,17 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
                   <span>English Radar (CEFR {level})</span>
                 </h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
                   Diagnóstico equilibrado das suas 6 competências
                 </p>
               </div>
-              <Badge variant="gold" size="sm">
-                Atualizado Hoje
-              </Badge>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                Hoje
+              </span>
             </div>
 
             <div className="py-2">
@@ -162,8 +159,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
-            <span>Objetivo do Perfil: <strong className="text-zinc-200">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
+          <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-[var(--text-muted)]">
+            <span>Objetivo do Perfil: <strong className="text-white">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
             <Link href="/progress" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <span>Ver detalhes</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -181,13 +178,13 @@ export default function DashboardPage() {
                   <Brain className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-zinc-100">Revisão Ativa de Memória</h4>
-                  <p className="text-xs text-zinc-400">Spaced Repetition System (SRS)</p>
+                  <h4 className="text-base font-bold text-white">Revisão Ativa de Memória</h4>
+                  <p className="text-xs text-[var(--text-muted)]">Spaced Repetition System (SRS)</p>
                 </div>
               </div>
-              <Badge variant="gold" size="md">
-                {DASHBOARD_SRS_ITEMS.length} prontas hoje
-              </Badge>
+              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-400/30">
+                {DASHBOARD_SRS_ITEMS.length} prontas
+              </span>
             </div>
 
             <div className="space-y-2 mb-5">
@@ -196,10 +193,10 @@ export default function DashboardPage() {
                   <button
                     key={item.id}
                     onClick={() => playPronunciation(item.word)}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-amber-300 font-mono flex items-center gap-1.5 cursor-pointer transition-all"
+                    className="text-xs px-3 py-1.5 rounded-xl bg-[#14141d] border border-white/10 hover:border-amber-500/50 text-amber-300 font-mono flex items-center gap-2 cursor-pointer transition-all shadow-sm"
                   >
                     <span>{item.word}</span>
-                    <Volume2 className="w-3 h-3 text-zinc-500" />
+                    <Volume2 className="w-3.5 h-3.5 text-white/40 hover:text-amber-300" />
                   </button>
                 ))}
               </div>
@@ -219,27 +216,27 @@ export default function DashboardPage() {
           {/* Weekly Goals Progress */}
           <div className="p-6 studio-card rounded-3xl">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-400" />
                 <span>Meta Semanal de Estudo</span>
               </h4>
-              <span className="text-xs font-bold text-emerald-400">65 / 100 min</span>
+              <span className="text-xs font-mono font-bold text-emerald-400">65 / 100 min</span>
             </div>
 
             <ProgressBar value={65} max={100} variant="emerald" size="md" showLabel={false} />
 
-            <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-zinc-800 text-center">
+            <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-white/10 text-center">
               <div>
-                <div className="text-lg font-black text-zinc-100 font-mono">45 min</div>
-                <div className="text-[11px] text-zinc-500">Conversação</div>
+                <div className="text-lg font-black text-white font-mono">45 min</div>
+                <div className="text-[11px] text-[var(--text-muted)]">Conversação</div>
               </div>
               <div>
-                <div className="text-lg font-black text-zinc-100 font-mono">38</div>
-                <div className="text-[11px] text-zinc-500">Palavras Ativas</div>
+                <div className="text-lg font-black text-white font-mono">38</div>
+                <div className="text-[11px] text-[var(--text-muted)]">Palavras Ativas</div>
               </div>
               <div>
-                <div className="text-lg font-black text-zinc-100 font-mono">92%</div>
-                <div className="text-[11px] text-zinc-500">Retenção SRS</div>
+                <div className="text-lg font-black text-white font-mono">92%</div>
+                <div className="text-[11px] text-[var(--text-muted)]">Retenção SRS</div>
               </div>
             </div>
           </div>
