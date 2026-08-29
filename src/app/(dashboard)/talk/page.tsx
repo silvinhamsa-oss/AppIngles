@@ -12,12 +12,18 @@ import {
   Brain,
   RotateCcw,
   Zap,
-  Info,
+  Award,
+  Layers,
+  Clock,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
+import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk/TopicSelector";
+import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { ConversationMode } from "@/types/conversation";
+import confetti from "canvas-confetti";
 
 interface MessageItem {
   id: string;
@@ -27,8 +33,8 @@ interface MessageItem {
 }
 
 export default function TalkPage() {
-  const [mode, setMode] = useState<ConversationMode>("guided");
-  const [topic, setTopic] = useState("Projetos & Desenvolvimento");
+  const [selectedTopic, setSelectedTopic] = useState<ScenarioTopic>(SCENARIO_TOPICS[1]); // Tech projects default
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [autoPlayAudio, setAutoPlayAudio] = useState(true);
@@ -36,6 +42,15 @@ export default function TalkPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [persona, setPersona] = useState<"sarah" | "marcus">("sarah");
   const [hintMessage, setHintMessage] = useState<string | null>(null);
+
+  // Timer state
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(true);
+
+  // Report Modal state
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationReport, setEvaluationReport] = useState<EvaluationReport | null>(null);
 
   const speechRecognizerRef = useRef<{ stop: () => void } | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
@@ -51,8 +66,24 @@ export default function TalkPage() {
   ]);
 
   useEffect(() => {
+    let interval: any = null;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isAiSpeaking, isGenerating]);
+
+  const formatTimer = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
 
   const handleSpeakText = (text: string) => {
     setIsAiSpeaking(true);
@@ -120,7 +151,6 @@ export default function TalkPage() {
     setMessages([...newMessages, aiMsgPlaceholder]);
 
     try {
-      // Build API messages payload
       const chatPayload = newMessages.map((m) => ({
         role: m.sender === "user" ? "user" : "assistant",
         content: m.content,
@@ -135,9 +165,9 @@ export default function TalkPage() {
         body: JSON.stringify({
           messages: chatPayload,
           providerConfig,
-          level: "B1+",
-          mode,
-          topic,
+          level: selectedTopic.level,
+          mode: selectedTopic.mode,
+          topic: selectedTopic.title,
           persona,
           stream: true,
         }),
@@ -202,9 +232,54 @@ export default function TalkPage() {
     }
   };
 
+  const handleSelectTopic = (topic: ScenarioTopic) => {
+    setSelectedTopic(topic);
+    setIsTopicModalOpen(false);
+    setMessages([
+      {
+        id: String(Date.now()),
+        sender: "ai",
+        content: `Great! We are now practicing: "${topic.title}". Let's get started whenever you are ready!`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+  };
+
   const handleForgotWord = () => {
     setHintMessage("💡 Dica de resgate: Quando você quer expressar 'vale a pena', use a estrutura: 'It is worth it...'");
     setTimeout(() => setHintMessage(null), 7000);
+  };
+
+  const handleEndSession = async () => {
+    setIsTimerRunning(false);
+    setIsEvaluating(true);
+
+    try {
+      const savedAiConfig = localStorage.getItem("english-lab-ai-config");
+      const providerConfig = savedAiConfig ? JSON.parse(savedAiConfig) : {};
+
+      const res = await fetch("/api/ai/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: messages.map((m) => ({ role: m.sender, content: m.content })),
+          providerConfig,
+        }),
+      });
+
+      const reportData = await res.json();
+      setEvaluationReport(reportData);
+      setIsReportModalOpen(true);
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    } catch (err) {
+      console.error("Error evaluating session:", err);
+    } finally {
+      setIsEvaluating(false);
+    }
   };
 
   return (
@@ -212,24 +287,49 @@ export default function TalkPage() {
       {/* Studio Audio Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg">
         <div className="flex items-center gap-3">
-          {/* Persona indicator */}
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 p-0.5 shadow-md shadow-amber-500/20">
-              <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-black text-amber-400 text-xs">
-                {persona === "sarah" ? "GB" : "US"}
-              </div>
+          {/* Persona selector toggle */}
+          <button
+            onClick={() => setPersona(persona === "sarah" ? "marcus" : "sarah")}
+            className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer"
+            title="Alternar entre Sarah (UK) e Marcus (US)"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
+              {persona === "sarah" ? "GB" : "US"}
             </div>
+            <div className="text-left hidden sm:block pr-2">
+              <div className="text-xs font-bold text-white leading-tight">
+                {persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}
+              </div>
+              <div className="text-[10px] text-zinc-400">Clique p/ trocar</div>
+            </div>
+          </button>
+
+          {/* Topic Selector Button */}
+          <button
+            onClick={() => setIsTopicModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group"
+          >
+            <Layers className="w-4 h-4 text-amber-400 group-hover:scale-110" />
             <div>
-              <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>{persona === "sarah" ? "Sarah • Tutor de Conversação (UK)" : "Marcus • Tech Mentor (US)"}</span>
+              <div className="text-xs font-bold text-white flex items-center gap-1">
+                <span>{selectedTopic.title}</span>
+                <ChevronDown className="w-3 h-3 text-zinc-400" />
               </div>
-              <p className="text-[11px] text-zinc-400">Modo: Conversa Guiada • Tema: {topic}</p>
+              <div className="text-[10px] text-zinc-400 font-mono">
+                Nível {selectedTopic.level} • {selectedTopic.mode}
+              </div>
             </div>
-          </div>
+          </button>
         </div>
 
-        {/* Live Visualizer and Audio Controls */}
-        <div className="flex items-center gap-3">
+        {/* Timer, Live Visualizer and Action Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Active Speaking Timer */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs font-mono font-bold">
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span>{formatTimer(secondsElapsed)}</span>
+          </div>
+
           <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
 
           <button
@@ -242,18 +342,27 @@ export default function TalkPage() {
             title="Auto-fala da IA"
           >
             {autoPlayAudio ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">Voz Ativa</span>
           </button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={handleForgotWord}
-            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs"
+            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden sm:flex"
           >
             <HelpCircle className="w-3.5 h-3.5 mr-1" />
             <span>Esqueci a palavra</span>
           </Button>
+
+          {/* End Session Button */}
+          <button
+            onClick={handleEndSession}
+            disabled={isEvaluating || messages.length <= 1}
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>{isEvaluating ? "Gerando..." : "Concluir"}</span>
+          </button>
         </div>
       </div>
 
@@ -354,6 +463,34 @@ export default function TalkPage() {
           </Button>
         </form>
       </div>
+
+      {/* Topic Selection Modal */}
+      {isTopicModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-2xl rounded-3xl bg-[#0b0b10] border border-amber-500/40 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white">Selecione o Tema ou Cenário de Treino</h3>
+                <p className="text-xs text-zinc-400">Escolha o tópico para guiar as perguntas do seu tutor de IA.</p>
+              </div>
+              <button onClick={() => setIsTopicModalOpen(false)} className="text-zinc-400 hover:text-white">✕</button>
+            </div>
+
+            <TopicSelector
+              selectedTopicId={selectedTopic.id}
+              onSelectTopic={handleSelectTopic}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Post-Session Evaluation Report Modal */}
+      <SessionReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        report={evaluationReport}
+        durationMinutes={Math.max(1, Math.round(secondsElapsed / 60))}
+      />
     </div>
   );
 }
