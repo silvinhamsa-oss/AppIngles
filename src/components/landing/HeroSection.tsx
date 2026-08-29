@@ -13,7 +13,7 @@ export function HeroSection() {
 
   const handlePlayDemoAudio = () => {
     setIsPlayingDemo(true);
-    const text = "Welcome to English Lab! I am your AI personal tutor. Let's practice speaking naturally without mental translation.";
+    const text = "Welcome to English Lab. I am your personal conversational tutor. Let us practice speaking naturally without mental translation.";
     const utter = playPronunciation(text, 0.95, "en-US");
     if (utter) {
       utter.onend = () => setIsPlayingDemo(false);
@@ -27,15 +27,16 @@ export function HeroSection() {
     <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-32 overflow-hidden studio-mesh">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-amber-300 text-xs font-semibold mb-8 shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-amber-300 text-xs font-semibold mb-8 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Tutor Particular de Inglês com Inteligência Artificial Adaptativa</span>
+          <span>Tutor Particular com Inteligência Artificial Adaptativa</span>
         </div>
 
-        {/* Main Headline */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-zinc-100 tracking-tight leading-[1.08] mb-6">
+        {/* Main Headline with Editorial Serif Touch */}
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-zinc-100 tracking-[-0.03em] leading-[1.08] mb-6">
           Your English. <br />
-          <span className="text-gradient-gold">Your Pace. Your AI Tutor.</span>
+          <span className="font-editorial text-amber-400 font-normal">Your Pace. </span>
+          <span>Your AI Tutor.</span>
         </h1>
 
         {/* Subtitle */}
@@ -67,7 +68,7 @@ export function HeroSection() {
               </div>
               <div>
                 <div className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                  Demonstração em Tempo Real
+                  Demonstração de Áudio Nativo
                 </div>
                 <div className="text-sm font-semibold text-zinc-200 mt-0.5">
                   Ouça como a IA conduz uma sessão de fala natural
@@ -90,8 +91,8 @@ export function HeroSection() {
 
           {isPlayingDemo && (
             <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center justify-between animate-in fade-in">
-              <span className="text-xs text-zinc-400 italic">
-                &ldquo;Welcome to English Lab! Let&apos;s practice speaking naturally...&rdquo;
+              <span className="text-xs text-zinc-400 font-serif italic">
+                &ldquo;Welcome to English Lab. Let us practice speaking naturally...&rdquo;
               </span>
               <AudioVisualizer isActive={true} variant="amber" barCount={12} />
             </div>

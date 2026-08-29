@@ -1,15 +1,32 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  variable: "--font-sans",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const newsreaderSerif = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "English Lab — Your English. Your Pace. Your AI Tutor",
-  description: "Plataforma pessoal de aprendizagem de inglês com tutor particular de IA adaptativo, prática de conversação e retenção de vocabulário.",
+  title: "English Lab — Studio Voice & AI English Tutor",
+  description: "Tutor particular de inglês de alto padrão. Conversação imersiva, active recall e repetição espaçada.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -21,8 +38,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${inter.className} h-full antialiased`} data-theme="dark">
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <html
+      lang="pt-BR"
+      className={`${jakartaSans.variable} ${jetbrainsMono.variable} ${newsreaderSerif.variable} h-full antialiased`}
+      data-theme="dark"
+    >
+      <body className="min-h-full flex flex-col bg-[#09090b] text-[#fafafa] font-sans selection:bg-amber-400 selection:text-zinc-950">
         {children}
       </body>
     </html>

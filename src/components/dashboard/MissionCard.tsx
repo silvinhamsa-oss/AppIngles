@@ -58,16 +58,16 @@ export function MissionCard({
             </Badge>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-zinc-100 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 tracking-tight leading-tight">
             {title}
           </h2>
 
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-300 leading-relaxed font-normal">
             {description}
           </p>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs text-zinc-500 font-semibold">Foco:</span>
+            <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Foco:</span>
             {skillsWorked.map((skill, idx) => (
               <span
                 key={idx}
