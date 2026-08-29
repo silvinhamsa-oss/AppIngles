@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { MissionCard } from "@/components/dashboard/MissionCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
-import { LevelSwitcher } from "@/components/dashboard/LevelSwitcher";
 import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
 import { VoiceOrb } from "@/components/ui/VoiceOrb";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -18,7 +17,9 @@ import {
   ArrowRight,
   Volume2,
   Sparkles,
-  Zap,
+  Flame,
+  Check,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -65,62 +66,68 @@ const DASHBOARD_SRS_ITEMS: VocabularyItem[] = [
   },
 ];
 
+const WEEK_DAYS = [
+  { day: "Seg", completed: true, date: "24" },
+  { day: "Ter", completed: true, date: "25" },
+  { day: "Qua", completed: true, date: "26" },
+  { day: "Qui", completed: true, date: "27" },
+  { day: "Sex", completed: true, date: "28" },
+  { day: "Sáb", completed: false, isToday: true, date: "29" },
+  { day: "Dom", completed: false, date: "30" },
+];
+
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<"parent" | "child">("parent");
   const [level, setLevel] = useState<CEFRLevel>("B1+");
   const [isSRSModalOpen, setIsSRSModalOpen] = useState(false);
 
-  const handleSwitchProfile = (newProfile: "parent" | "child", newLevel: CEFRLevel) => {
-    setProfile(newProfile);
-    setLevel(newLevel);
+  const radarData: SkillRadarData = {
+    speaking: 72,
+    vocabulary: 68,
+    listening: 78,
+    grammar: 82,
+    reading: 85,
+    writing: 74,
   };
-
-  const radarData: SkillRadarData =
-    profile === "parent"
-      ? { speaking: 72, vocabulary: 68, listening: 78, grammar: 82, reading: 85, writing: 74 }
-      : { speaking: 40, vocabulary: 45, listening: 50, grammar: 35, reading: 55, writing: 30 };
-
-  const missionTitle =
-    profile === "parent"
-      ? "Fale sobre a sua semana e novos projetos"
-      : "Apresente sua família e seus animais favoritos";
-
-  const missionDescription =
-    profile === "parent"
-      ? "Pratique conectivos de frase (however, although) e o passado simples sem tradução mental com o tutor de IA."
-      : "Aprenda e pratique vocabulário básico de apresentação pessoal, saudações e frases simples com áudio calmo.";
-
-  const missionSkills =
-    profile === "parent"
-      ? ["Conversação", "Vocabulário Ativo", "Listening"]
-      : ["Fundamentos A1", "Vocabulário Básico", "Pronúncia"];
 
   return (
     <div className="space-y-8 aurora-bg">
       {/* Top Greeting and Living AI Voice Orb */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-3xl bg-gradient-to-r from-purple-950/25 via-[#0d0d12] to-amber-950/20 border border-white/10 shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950/25 via-[#0d0d12] to-amber-950/20 border border-white/10 shadow-2xl relative overflow-hidden">
         <div className="space-y-3 z-10 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Sessão Ativa com Tutor de IA</span>
+            <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span>Ofensiva de 5 Dias Ativa 🔥</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            {profile === "parent" ? "Olá, Welld! 👋" : "Olá, Campeão! 🚀"}
+            Olá, Welld! 👋
           </h1>
 
           <p className="text-sm text-zinc-300 font-normal leading-relaxed">
-            {profile === "parent"
-              ? "Seu tutor está calibrado para o nível B1+. Clique no orbe de voz para praticar ou inicie sua missão diária abaixo."
-              : "Pronto para aprender palavras novas com áudio e jogos? Vamos com calma e no seu ritmo!"}
+            Seu tutor de IA está calibrado no nível <strong>B1+</strong>. O foco principal da sua sessão hoje é <strong>conversação fluida</strong> e <strong>recuperação ativa de vocabulário</strong> sem tradução mental.
           </p>
 
-          <div className="pt-1">
-            <LevelSwitcher
-              currentProfile={profile}
-              currentLevel={level}
-              onSwitchProfile={handleSwitchProfile}
-            />
+          {/* 7-Day Streak Tracker */}
+          <div className="pt-2 flex items-center gap-2">
+            {WEEK_DAYS.map((wd, i) => (
+              <div
+                key={i}
+                className={`flex flex-col items-center justify-center w-9 h-12 rounded-xl border text-center transition-all ${
+                  wd.completed
+                    ? "bg-amber-500/20 border-amber-400/50 text-amber-300 shadow-sm"
+                    : wd.isToday
+                    ? "bg-white/10 border-amber-400 text-white ring-2 ring-amber-500/30"
+                    : "bg-white/5 border-white/5 text-zinc-500"
+                }`}
+              >
+                <span className="text-[9px] font-mono uppercase">{wd.day}</span>
+                {wd.completed ? (
+                  <Check className="w-3.5 h-3.5 mt-0.5 text-amber-400 stroke-[3]" />
+                ) : (
+                  <span className="text-[10px] font-mono font-bold mt-0.5">{wd.date}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -130,14 +137,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Mission of the Day */}
-      <MissionCard
-        title={missionTitle}
-        description={missionDescription}
-        skillsWorked={missionSkills}
-        durationMinutes={profile === "parent" ? 20 : 10}
-        targetLevel={level}
-      />
+      {/* Mission of the Day with Duration Selector */}
+      <MissionCard targetLevel={level} />
 
       {/* Quick Action Hub with Vibrant Halos */}
       <div className="space-y-3">
@@ -174,7 +175,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-zinc-300">
-            <span>Objetivo do Perfil: <strong className="text-amber-400 font-bold">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
+            <span>Objetivo do Perfil: <strong className="text-amber-400 font-bold">Rumo ao B2</strong></span>
             <Link href="/progress" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <span>Ver detalhes</span>
               <ArrowRight className="w-3.5 h-3.5" />
