@@ -7,20 +7,19 @@ import { Button } from "@/components/ui/Button";
 
 export function FinalCTA() {
   return (
-    <section className="py-20 sm:py-28 relative overflow-hidden border-t border-slate-800/80">
-      <div className="absolute inset-0 bg-radial-gradient pointer-events-none" />
+    <section className="py-20 sm:py-28 relative overflow-hidden border-t border-[var(--border-subtle)] studio-mesh">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-400 mx-auto flex items-center justify-center text-white shadow-xl shadow-indigo-600/30 mb-6">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 mx-auto flex items-center justify-center text-zinc-950 shadow-xl shadow-amber-500/20 mb-6">
           <Sparkles className="w-7 h-7" />
         </div>
-        <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-100 tracking-tight mb-4">
+        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-[-0.03em] mb-4">
           Comece sua jornada no inglês hoje.
         </h2>
-        <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto mb-8">
+        <p className="text-base sm:text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-8 font-normal">
           Pratique 15 minutos por dia com seu tutor de IA adaptativo e sinta a diferença na naturalidade e na recuperação de vocabulário.
         </p>
         <Link href="/dashboard">
-          <Button variant="glow" size="lg">
+          <Button variant="gold" size="lg" className="shadow-xl shadow-amber-500/15">
             <span>Acessar o English Lab</span>
             <ArrowRight className="w-5 h-5 ml-1" />
           </Button>

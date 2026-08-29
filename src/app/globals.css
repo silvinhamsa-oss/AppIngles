@@ -7,32 +7,32 @@
 }
 
 :root {
-  --bg-main: #09090b;
-  --bg-card: #121216;
-  --bg-card-hover: #18181f;
-  --bg-elevated: #1e1e26;
+  --bg-main: #050507;
+  --bg-card: #0d0d12;
+  --bg-card-hover: #14141b;
+  --bg-elevated: #1a1a24;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(245, 158, 11, 0.4);
-  --text-main: #fafafa;
-  --text-muted: #a1a1aa;
-  --text-faint: #52525b;
+  --border-active: rgba(245, 158, 11, 0.45);
+  --text-main: #ffffff;
+  --text-muted: #e2e2e8;
+  --text-faint: #8e8e9f;
   --accent-gold: #f59e0b;
-  --accent-gold-glow: rgba(245, 158, 11, 0.15);
+  --accent-gold-glow: rgba(245, 158, 11, 0.2);
   --accent-emerald: #10b981;
 }
 
 [data-theme="light"] {
-  --bg-main: #f8fafc;
+  --bg-main: #fcfcfd;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-elevated: #e2e8f0;
+  --bg-card-hover: #f4f4f7;
+  --bg-elevated: #eaeaf0;
   --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-active: rgba(217, 119, 6, 0.4);
-  --text-main: #09090b;
-  --text-muted: #475569;
-  --text-faint: #94a3b8;
+  --border-active: rgba(217, 119, 6, 0.5);
+  --text-main: #0a0a0f;
+  --text-muted: #3f3f4e;
+  --text-faint: #717182;
   --accent-gold: #d97706;
-  --accent-gold-glow: rgba(217, 119, 6, 0.1);
+  --accent-gold-glow: rgba(217, 119, 6, 0.15);
   --accent-emerald: #059669;
 }
 
@@ -47,7 +47,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Editorial Serif Headline style */
+/* Editorial Serif Accent */
 .font-editorial {
   font-family: var(--font-serif);
   font-style: italic;
@@ -59,30 +59,31 @@ body {
   letter-spacing: -0.03em;
 }
 
-/* Background Atmosphere */
+/* Atmosphere Glow */
 .studio-mesh {
   background: 
-    radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.06) 0%, rgba(9, 9, 11, 0) 65%),
-    radial-gradient(ellipse at 90% 90%, rgba(99, 102, 241, 0.04) 0%, rgba(9, 9, 11, 0) 50%);
+    radial-gradient(ellipse at 50% -10%, rgba(245, 158, 11, 0.08) 0%, rgba(5, 5, 7, 0) 65%),
+    radial-gradient(ellipse at 90% 90%, rgba(16, 185, 129, 0.04) 0%, rgba(5, 5, 7, 0) 50%);
 }
 
-/* Tactile Studio Card */
+/* Obsidian Pro Card */
 .studio-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .studio-card:hover {
   background: var(--bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] .studio-card {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 10px 25px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.04);
 }
 
 /* 3D Flip Card Styles */
@@ -126,10 +127,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.3);
 }
