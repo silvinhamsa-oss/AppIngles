@@ -11,12 +11,14 @@ import {
   TrendingUp,
   Settings,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Painel", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Aprender (Curso)", href: "/learn", icon: BookOpen, badge: "A1/B1" },
+  { label: "Teste de Nível", href: "/test", icon: GraduationCap, badge: "3 min" },
+  { label: "Aprender (Curso)", href: "/learn", icon: BookOpen, badge: "A1-C2" },
   { label: "Conversar com IA", href: "/talk", icon: MessageSquare, badge: "Live" },
   { label: "Banco & Active Recall", href: "/vocabulary", icon: Library },
   { label: "Progresso & Radar", href: "/progress", icon: TrendingUp },
