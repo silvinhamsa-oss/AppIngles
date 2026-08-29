@@ -15,7 +15,6 @@ import {
   Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { ConversationMode } from "@/types/conversation";
@@ -25,11 +24,6 @@ interface MessageItem {
   sender: "ai" | "user";
   content: string;
   timestamp: string;
-  correction?: {
-    original: string;
-    suggested: string;
-    explanation: string;
-  };
 }
 
 export default function TalkPage() {
@@ -39,6 +33,7 @@ export default function TalkPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [autoPlayAudio, setAutoPlayAudio] = useState(true);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [persona, setPersona] = useState<"sarah" | "marcus">("sarah");
   const [hintMessage, setHintMessage] = useState<string | null>(null);
 
@@ -57,7 +52,7 @@ export default function TalkPage() {
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isAiSpeaking]);
+  }, [messages, isAiSpeaking, isGenerating]);
 
   const handleSpeakText = (text: string) => {
     setIsAiSpeaking(true);
@@ -92,9 +87,9 @@ export default function TalkPage() {
     }
   };
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isGenerating) return;
 
     if (isRecording) {
       speechRecognizerRef.current?.stop();
@@ -109,52 +104,123 @@ export default function TalkPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInputMessage("");
+    setIsGenerating(true);
 
-    // Simulate AI response with natural pedagogical feedback
-    setTimeout(() => {
-      let aiReply = "";
-      if (userText.toLowerCase().includes("next") || userText.toLowerCase().includes("code")) {
-        aiReply = "That's a very solid architectural approach! Keeping the AI provider layer decoupled allows you to swap LLM engines with zero friction. How are you handling latency in the conversation stream?";
-      } else {
-        aiReply = "I see your point! Speaking naturally without translating mental sentences is exactly how fluency develops. Tell me more about that.";
+    const aiMsgId = String(Date.now() + 1);
+    const aiMsgPlaceholder: MessageItem = {
+      id: aiMsgId,
+      sender: "ai",
+      content: "",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setMessages([...newMessages, aiMsgPlaceholder]);
+
+    try {
+      // Build API messages payload
+      const chatPayload = newMessages.map((m) => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        content: m.content,
+      }));
+
+      const savedAiConfig = localStorage.getItem("english-lab-ai-config");
+      const providerConfig = savedAiConfig ? JSON.parse(savedAiConfig) : {};
+
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: chatPayload,
+          providerConfig,
+          level: "B1+",
+          mode,
+          topic,
+          persona,
+          stream: true,
+        }),
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error("Erro na resposta do servidor.");
       }
 
-      const aiMsg: MessageItem = {
-        id: String(Date.now() + 1),
-        sender: "ai",
-        content: aiReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let fullAiText = "";
+      let buffer = "";
 
-      setMessages((prev) => [...prev, aiMsg]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      if (autoPlayAudio) {
-        handleSpeakText(aiReply);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(":")) continue;
+          if (trimmed === "data: [DONE]") break;
+
+          if (trimmed.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(trimmed.slice(6));
+              if (data.content) {
+                fullAiText += data.content;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === aiMsgId ? { ...msg, content: fullAiText } : msg
+                  )
+                );
+              }
+            } catch {}
+          }
+        }
       }
-    }, 1000);
+
+      setIsGenerating(false);
+      if (autoPlayAudio && fullAiText) {
+        handleSpeakText(fullAiText);
+      }
+    } catch (err) {
+      console.error("AI response error:", err);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? {
+                ...msg,
+                content:
+                  "I understand what you mean! Developing fluency takes constant repetition and natural interaction. What would you like to explore next?",
+              }
+            : msg
+        )
+      );
+      setIsGenerating(false);
+    }
   };
 
   const handleForgotWord = () => {
-    setHintMessage("💡 Dica de resgate: Quando você quer dizer que algo 'vale a pena', pense na expressão: 'It is worth it...'");
+    setHintMessage("💡 Dica de resgate: Quando você quer expressar 'vale a pena', use a estrutura: 'It is worth it...'");
     setTimeout(() => setHintMessage(null), 7000);
   };
 
   return (
     <div className="h-[calc(100vh-8.5rem)] flex flex-col space-y-3 max-w-5xl mx-auto">
       {/* Studio Audio Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 studio-card rounded-2xl border-zinc-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg">
         <div className="flex items-center gap-3">
           {/* Persona indicator */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-700 p-0.5 shadow-md shadow-amber-500/20">
-              <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-bold text-amber-400 text-xs">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 p-0.5 shadow-md shadow-amber-500/20">
+              <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-black text-amber-400 text-xs">
                 {persona === "sarah" ? "GB" : "US"}
               </div>
             </div>
             <div>
-              <div className="text-xs font-bold text-zinc-100 flex items-center gap-1.5">
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
                 <span>{persona === "sarah" ? "Sarah • Tutor de Conversação (UK)" : "Marcus • Tech Mentor (US)"}</span>
               </div>
               <p className="text-[11px] text-zinc-400">Modo: Conversa Guiada • Tema: {topic}</p>
@@ -164,18 +230,18 @@ export default function TalkPage() {
 
         {/* Live Visualizer and Audio Controls */}
         <div className="flex items-center gap-3">
-          <AudioVisualizer isActive={isAiSpeaking || isRecording} variant={isRecording ? "emerald" : "amber"} />
+          <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
 
           <button
             onClick={() => setAutoPlayAudio(!autoPlayAudio)}
-            className={`p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               autoPlayAudio
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                : "bg-zinc-800 border-zinc-700 text-zinc-400"
+                ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                : "bg-white/5 border-white/10 text-zinc-400"
             }`}
             title="Auto-fala da IA"
           >
-            {autoPlayAudio ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {autoPlayAudio ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">Voz Ativa</span>
           </button>
 
@@ -193,14 +259,14 @@ export default function TalkPage() {
 
       {/* Hint Alert if triggered */}
       {hintMessage && (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 animate-in fade-in flex items-center justify-between">
+        <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 animate-in fade-in flex items-center justify-between shadow-lg">
           <span>{hintMessage}</span>
           <button onClick={() => setHintMessage(null)} className="text-amber-400 hover:text-amber-200">✕</button>
         </div>
       )}
 
       {/* Main Conversation Stream */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 rounded-2xl studio-card flex flex-col justify-between">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 rounded-3xl bg-[#09090e] border border-white/10 shadow-2xl flex flex-col justify-between">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
@@ -213,8 +279,8 @@ export default function TalkPage() {
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                   msg.sender === "user"
-                    ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
-                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                    ? "bg-[#181822] text-white border border-white/15"
+                    : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                 }`}
               >
                 {msg.sender === "user" ? "EU" : "AI"}
@@ -224,13 +290,13 @@ export default function TalkPage() {
               <div
                 className={`max-w-xl rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${
                   msg.sender === "user"
-                    ? "bg-amber-500 text-zinc-950 font-medium rounded-tr-none shadow-lg shadow-amber-500/10"
-                    : "bg-zinc-900/90 border border-zinc-800/90 text-zinc-200 rounded-tl-none"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 font-bold rounded-tr-none shadow-lg shadow-amber-500/20"
+                    : "bg-[#13131b] border border-white/10 text-white rounded-tl-none"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p>{msg.content}</p>
-                  {msg.sender === "ai" && (
+                  <p>{msg.content || (isGenerating && msg.id === messages[messages.length - 1].id ? "Pensando..." : "")}</p>
+                  {msg.sender === "ai" && msg.content && (
                     <button
                       onClick={() => handleSpeakText(msg.content)}
                       className="p-1 rounded-lg text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer shrink-0 mt-0.5"
@@ -242,7 +308,7 @@ export default function TalkPage() {
                 </div>
                 <div
                   className={`text-[10px] mt-2 font-mono ${
-                    msg.sender === "user" ? "text-zinc-900/70" : "text-zinc-400"
+                    msg.sender === "user" ? "text-zinc-950/70" : "text-zinc-500"
                   }`}
                 >
                   {msg.timestamp}
@@ -254,14 +320,14 @@ export default function TalkPage() {
         </div>
 
         {/* Input Bar with Speech-to-Text */}
-        <form onSubmit={handleSendMessage} className="pt-4 border-t border-zinc-800/80 flex items-center gap-2">
+        <form onSubmit={handleSendMessage} className="pt-4 border-t border-white/10 flex items-center gap-2">
           <button
             type="button"
             onClick={toggleRecording}
-            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
               isRecording
-                ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40"
-                : "bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-400 hover:text-amber-300"
+                ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
+                : "bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 hover:text-amber-300"
             }`}
             title={isRecording ? "Parar Gravação" : "Falar no Microfone (Speech-to-Text)"}
           >
@@ -273,14 +339,16 @@ export default function TalkPage() {
             placeholder={isRecording ? "Ouvindo você falar em inglês..." : "Digite em inglês ou aperte no microfone para falar..."}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            className="flex-1 bg-zinc-900/90 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30"
+            disabled={isGenerating}
+            className="flex-1 bg-[#13131b] border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40"
           />
 
           <Button
             type="submit"
             variant="gold"
             size="icon"
-            disabled={!inputMessage.trim()}
+            disabled={!inputMessage.trim() || isGenerating}
+            isLoading={isGenerating}
           >
             <Send className="w-4 h-4" />
           </Button>

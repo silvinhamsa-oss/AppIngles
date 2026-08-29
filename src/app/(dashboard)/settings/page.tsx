@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -22,24 +22,72 @@ export default function SettingsPage() {
 
   // AI Configuration State
   const [provider, setProvider] = useState<AIProviderType>("openrouter");
-  const [apiKey, setApiKey] = useState("sk-or-v1-********************");
+  const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("meta-llama/llama-3.3-70b-instruct");
   const [baseUrl, setBaseUrl] = useState("");
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
 
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
+  const [testFeedback, setTestFeedback] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleTestConnection = () => {
+  useEffect(() => {
+    const saved = localStorage.getItem("english-lab-ai-config");
+    if (saved) {
+      try {
+        const config = JSON.parse(saved);
+        if (config.provider) setProvider(config.provider);
+        if (config.apiKey) setApiKey(config.apiKey);
+        if (config.model) setModel(config.model);
+        if (config.baseUrl) setBaseUrl(config.baseUrl);
+        if (config.temperature) setTemperature(config.temperature);
+        if (config.maxTokens) setMaxTokens(config.maxTokens);
+      } catch {}
+    }
+  }, []);
+
+  const handleTestConnection = async () => {
     setTestStatus("testing");
-    setTimeout(() => {
-      setTestStatus("success");
-    }, 1200);
+    setTestFeedback("");
+
+    try {
+      const res = await fetch("/api/ai/test-connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider,
+          apiKey,
+          model,
+          baseUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setTestStatus("success");
+        setTestFeedback(data.message || "Conexão realizada com sucesso!");
+      } else {
+        setTestStatus("error");
+        setTestFeedback(data.message || "Não foi possível conectar com o provedor.");
+      }
+    } catch (err: any) {
+      setTestStatus("error");
+      setTestFeedback(err.message || "Erro de rede ao testar conexão.");
+    }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    const config = {
+      provider,
+      apiKey,
+      model,
+      baseUrl,
+      temperature,
+      maxTokens,
+    };
+    localStorage.setItem("english-lab-ai-config", JSON.stringify(config));
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
@@ -47,12 +95,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <Badge variant="primary">Painel de Controle</Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight mt-2">
+        <Badge variant="gold">Painel de Controle</Badge>
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2">
           Configurações da Plataforma
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Ajuste os provedores de inteligência artificial, parâmetros pedagógicos, perfis e voz.
+        <p className="text-sm text-[var(--text-muted)] mt-1">
+          Configure seus provedores de IA, parâmetros pedagógicos e síntese de voz com segurança total.
         </p>
       </div>
 
@@ -67,34 +115,48 @@ export default function SettingsPage() {
       />
 
       {activeTab === "ai" && (
-        <Card variant="glass" className="p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
             <div>
-              <h2 className="text-lg font-bold text-slate-100">Camada de IA Desacoplada</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                O English Lab não fica preso a um fornecedor. Conecte sua chave com total segurança.
+              <h2 className="text-lg font-bold text-white">Camada de IA Desacoplada (AI Router)</h2>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
+                Conecte seu provedor de preferência com segurança. As chaves nunca são expostas publicamente.
               </p>
             </div>
-            <Badge variant="gold">Zero Vendor Lock-in</Badge>
+            <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
+              Desacoplado
+            </span>
           </div>
 
           <form onSubmit={handleSave} className="space-y-5">
             {/* Provider Selector */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Provedor de IA
               </label>
               <select
                 value={provider}
-                onChange={(e) => setProvider(e.target.value as AIProviderType)}
-                className="w-full rounded-xl bg-slate-900 border border-slate-700/80 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                onChange={(e) => {
+                  const val = e.target.value as AIProviderType;
+                  setProvider(val);
+                  if (val === "openrouter") setModel("meta-llama/llama-3.3-70b-instruct");
+                  else if (val === "nvidia") setModel("meta/llama-3.3-70b-instruct");
+                  else if (val === "openai") setModel("gpt-4o-mini");
+                  else if (val === "gemini") setModel("gemini-2.0-flash");
+                  else if (val === "anthropic") setModel("claude-3-5-sonnet-20241022");
+                  else if (val === "ollama") {
+                    setModel("llama3.2");
+                    setBaseUrl("http://localhost:11434/v1");
+                  }
+                }}
+                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
               >
-                <option value="openrouter">OpenRouter (Recomendado — Centenas de Modelos)</option>
-                <option value="nvidia">NVIDIA NIM (Llama 3, Mistral NeMo, Nemotron)</option>
+                <option value="openrouter">OpenRouter (Centenas de Modelos • Llama 3.3, Mistral, DeepSeek)</option>
+                <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron)</option>
                 <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
-                <option value="gemini">Google Gemini (Gemini 2.0 Flash / Pro)</option>
+                <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
                 <option value="anthropic">Anthropic (Claude 3.5 Sonnet / Haiku)</option>
-                <option value="ollama">Ollama (Servidor Local)</option>
+                <option value="ollama">Ollama (Servidor Local no PC)</option>
                 <option value="custom">Provedor Customizado (Compatível com OpenAI)</option>
               </select>
             </div>
@@ -103,26 +165,26 @@ export default function SettingsPage() {
             <Input
               label="Chave de API (API Key)"
               type="password"
-              placeholder="sk-..."
+              placeholder={provider === "ollama" ? "Opcional para Ollama" : "Cole sua chave (sk-...)"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              helperText="Armazenada com segurança no servidor. Nunca exposta no navegador."
+              helperText="Armazenada de forma segura. O AI Router protege suas credenciais."
             />
 
             {/* Model Name */}
             <Input
               label="Nome do Modelo (Model)"
               type="text"
-              placeholder="Ex: meta-llama/llama-3.3-70b-instruct ou gpt-4o-mini"
+              placeholder="Ex: meta-llama/llama-3.3-70b-instruct"
               value={model}
               onChange={(e) => setModel(e.target.value)}
             />
 
-            {/* Base URL (optional) */}
+            {/* Base URL */}
             <Input
-              label="URL Base (Base URL — Opcional para Custom / Ollama)"
+              label="URL Base (Base URL — Opcional)"
               type="text"
-              placeholder="https://openrouter.ai/api/v1 ou http://localhost:11434/v1"
+              placeholder={provider === "ollama" ? "http://localhost:11434/v1" : "https://api..."}
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
             />
@@ -131,8 +193,8 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate-300">Temperatura (Criatividade)</span>
-                  <span className="text-indigo-400 font-mono">{temperature}</span>
+                  <span className="text-zinc-300">Temperatura (Criatividade)</span>
+                  <span className="text-amber-400 font-mono">{temperature}</span>
                 </div>
                 <input
                   type="range"
@@ -141,14 +203,14 @@ export default function SettingsPage() {
                   step="0.1"
                   value={temperature}
                   onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                  className="w-full accent-indigo-500 cursor-pointer"
+                  className="w-full accent-amber-500 cursor-pointer"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate-300">Tokens Máximos</span>
-                  <span className="text-indigo-400 font-mono">{maxTokens}</span>
+                  <span className="text-zinc-300">Tokens Máximos</span>
+                  <span className="text-amber-400 font-mono">{maxTokens}</span>
                 </div>
                 <input
                   type="range"
@@ -157,35 +219,35 @@ export default function SettingsPage() {
                   step="256"
                   value={maxTokens}
                   onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                  className="w-full accent-indigo-500 cursor-pointer"
+                  className="w-full accent-amber-500 cursor-pointer"
                 />
               </div>
             </div>
 
-            {/* Connection Test Status */}
+            {/* Connection Test Status Feedback */}
             {testStatus === "success" && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>Conexão realizada com sucesso com o modelo <strong>{model}</strong>.</span>
+              <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2.5 shadow-lg">
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                <span>{testFeedback}</span>
               </div>
             )}
 
             {testStatus === "error" && (
-              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Não foi possível conectar. Verifique o provedor, a chave de API e o modelo.</span>
+              <div className="p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-xs text-red-300 flex items-center gap-2.5 shadow-lg">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+                <span>{testFeedback}</span>
               </div>
             )}
 
             {saveSuccess && (
-              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>Configurações salvas com sucesso!</span>
+              <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2.5 shadow-lg">
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-amber-400" />
+                <span>Configurações salvas com sucesso no seu perfil!</span>
               </div>
             )}
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-800">
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-white/10">
               <Button
                 type="button"
                 variant="outline"
@@ -196,21 +258,21 @@ export default function SettingsPage() {
                 <span>Testar Conexão</span>
               </Button>
 
-              <Button type="submit" variant="glow" className="w-full sm:w-auto">
+              <Button type="submit" variant="gold" className="w-full sm:w-auto">
                 <Save className="w-4 h-4 mr-1.5" />
                 <span>Salvar Configurações</span>
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
       )}
 
       {activeTab === "profile" && (
-        <Card variant="glass" className="p-6 sm:p-8 space-y-6">
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-slate-100">Perfil e Metas de Estudo</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Personalize o ritmo, nível CEFR e objetivos do aluno.
+            <h2 className="text-lg font-bold text-white">Perfil e Metas de Estudo</h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              Personalize seu nível CEFR e objetivos de conversação.
             </p>
           </div>
 
@@ -220,7 +282,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
               Nível Atual no CEFR
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -228,10 +290,10 @@ export default function SettingsPage() {
                 <button
                   key={lvl}
                   type="button"
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                     lvl === "B1+"
-                      ? "bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/30"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                      ? "bg-amber-500 border-amber-400 text-zinc-950 shadow-md shadow-amber-500/20"
+                      : "bg-[#14141e] border-white/10 text-zinc-400 hover:text-white"
                   }`}
                 >
                   {lvl}
@@ -240,49 +302,49 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <Button variant="glow">
+          <Button variant="gold">
             <span>Atualizar Perfil</span>
           </Button>
-        </Card>
+        </div>
       )}
 
       {activeTab === "voice" && (
-        <Card variant="glass" className="p-6 sm:p-8 space-y-6">
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-slate-100">Configurações de Fala & Voz</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h2 className="text-lg font-bold text-white">Configurações de Fala & Áudio</h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
               Provedores desacoplados para Reconhecimento (STT) e Síntese de Voz (TTS).
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Reconhecimento de Fala (Speech-to-Text)
               </label>
-              <select className="w-full rounded-xl bg-slate-900 border border-slate-700/80 px-4 py-2.5 text-sm text-slate-100">
+              <select className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white">
                 <option>Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
                 <option>OpenAI Whisper API</option>
-                <option>Groq Whisper (Ultra Rápido)</option>
+                <option>Groq Whisper (Ultra Baixa Latência)</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Síntese de Voz (Text-to-Speech)
               </label>
-              <select className="w-full rounded-xl bg-slate-900 border border-slate-700/80 px-4 py-2.5 text-sm text-slate-100">
-                <option>Voz Nativa do Navegador (Samantha / Google US English)</option>
+              <select className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white">
+                <option>Voz Nativa do Navegador (Samantha / Daniel UK / Google US)</option>
                 <option>ElevenLabs AI Voice (Ultra Realista)</option>
                 <option>OpenAI TTS (Alloy / Nova / Echo)</option>
               </select>
             </div>
           </div>
 
-          <Button variant="glow">
+          <Button variant="gold">
             <span>Salvar Preferências de Áudio</span>
           </Button>
-        </Card>
+        </div>
       )}
     </div>
   );
