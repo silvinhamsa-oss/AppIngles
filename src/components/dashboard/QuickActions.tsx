@@ -2,41 +2,53 @@
 
 import React from "react";
 import Link from "next/link";
-import { MessageSquare, Library, Headphones, BookOpen, ArrowRight } from "lucide-react";
+import { MessageSquare, Library, Headphones, BookOpen, ArrowRight, Sparkles } from "lucide-react";
 
 export function QuickActions() {
   const actions = [
     {
       title: "Conversar com IA",
-      subtitle: "Bate-papo livre ou guiado por tema",
+      subtitle: "Bate-papo livre ou guiado com áudio nativo",
       href: "/talk",
       icon: MessageSquare,
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/20 group-hover:bg-amber-500 group-hover:text-zinc-950",
+      haloClass: "card-halo-cyan",
+      iconBg: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-500/20",
+      accentText: "text-cyan-400 group-hover:text-cyan-300",
       badge: "Speaking",
+      badgeBg: "bg-cyan-950/80 text-cyan-300 border border-cyan-500/40",
     },
     {
       title: "Revisar Vocabulário",
-      subtitle: "Praticar Flashcards 3D & SRS",
+      subtitle: "Praticar Flashcards 3D com repetição espaçada",
       href: "/vocabulary",
       icon: Library,
-      color: "text-amber-300 bg-amber-400/10 border-amber-400/20 group-hover:bg-amber-400 group-hover:text-zinc-950",
+      haloClass: "card-halo-emerald",
+      iconBg: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/20",
+      accentText: "text-emerald-400 group-hover:text-emerald-300",
       badge: "Active Recall",
+      badgeBg: "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40",
     },
     {
-      title: "Trilha Guiada / Aulas",
-      subtitle: "Curso estruturado do A1 ao B2",
+      title: "Trilha de Aulas",
+      subtitle: "Curso estruturado do Iniciante (A1) ao B2",
       href: "/learn",
       icon: BookOpen,
-      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-zinc-950",
-      badge: "Iniciante & Interm.",
+      haloClass: "card-halo-purple",
+      iconBg: "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-lg shadow-purple-500/20",
+      accentText: "text-purple-400 group-hover:text-purple-300",
+      badge: "A1 ao B2",
+      badgeBg: "bg-purple-950/80 text-purple-300 border border-purple-500/40",
     },
     {
       title: "Compreensão Auditiva",
-      subtitle: "Exercícios de áudio e ditado",
+      subtitle: "Exercícios de escuta real, ditado e resumo",
       href: "/learn",
       icon: Headphones,
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/20 group-hover:bg-amber-500 group-hover:text-zinc-950",
+      haloClass: "card-halo-amber",
+      iconBg: "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg shadow-amber-500/20",
+      accentText: "text-amber-400 group-hover:text-amber-300",
       badge: "Listening",
+      badgeBg: "bg-amber-950/80 text-amber-300 border border-amber-500/40",
     },
   ];
 
@@ -46,26 +58,34 @@ export function QuickActions() {
         const Icon = action.icon;
         return (
           <Link key={idx} href={action.href} className="group">
-            <div className="studio-card rounded-2xl h-full p-5 flex flex-col justify-between hover:border-amber-500/40">
+            <div
+              className={`rounded-3xl p-5 flex flex-col justify-between h-full bg-[#0d0d14] transition-all duration-300 ${action.haloClass}`}
+            >
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${action.color}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${action.iconBg}`}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#181822] border border-white/10 text-white/80 font-mono uppercase">
+                  <span
+                    className={`text-[10px] font-bold font-mono uppercase px-2.5 py-0.5 rounded-full ${action.badgeBg}`}
+                  >
                     {action.badge}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
+
+                <h4 className="text-base font-bold text-white mb-1 group-hover:translate-x-0.5 transition-transform">
                   {action.title}
                 </h4>
-                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                   {action.subtitle}
                 </p>
               </div>
-              <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-amber-400 group-hover:text-amber-300">
-                <span>Acessar</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+
+              <div className={`pt-4 flex items-center gap-1.5 text-xs font-bold ${action.accentText}`}>
+                <span>Acessar Módulo</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>

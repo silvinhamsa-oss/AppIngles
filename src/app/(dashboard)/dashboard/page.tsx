@@ -6,9 +6,8 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
 import { LevelSwitcher } from "@/components/dashboard/LevelSwitcher";
 import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
+import { VoiceOrb } from "@/components/ui/VoiceOrb";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { CEFRLevel, SkillRadarData } from "@/types/profile";
 import { VocabularyItem } from "@/types/vocabulary";
 import { playPronunciation } from "@/lib/audio";
@@ -18,6 +17,8 @@ import {
   Clock,
   ArrowRight,
   Volume2,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -95,26 +96,38 @@ export default function DashboardPage() {
       : ["Fundamentos A1", "Vocabulário Básico", "Pronúncia"];
 
   return (
-    <div className="space-y-8">
-      {/* Top Greeting and Multi-Profile Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+    <div className="space-y-8 aurora-bg">
+      {/* Top Greeting and Living AI Voice Orb */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-3xl bg-gradient-to-r from-purple-950/25 via-[#0d0d12] to-amber-950/20 border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="space-y-3 z-10 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+            <Zap className="w-3.5 h-3.5" />
+            <span>Sessão Ativa com Tutor de IA</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
             {profile === "parent" ? "Olá, Welld! 👋" : "Olá, Campeão! 🚀"}
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1 font-normal">
+
+          <p className="text-sm text-zinc-300 font-normal leading-relaxed">
             {profile === "parent"
-              ? "Pronto para a missão de hoje? Foque em soltar a fala e recuperar palavras."
-              : "Vamos avançar nos fundamentos do inglês com calma e diversão!"}
+              ? "Seu tutor está calibrado para o nível B1+. Clique no orbe de voz para praticar ou inicie sua missão diária abaixo."
+              : "Pronto para aprender palavras novas com áudio e jogos? Vamos com calma e no seu ritmo!"}
           </p>
+
+          <div className="pt-1">
+            <LevelSwitcher
+              currentProfile={profile}
+              currentLevel={level}
+              onSwitchProfile={handleSwitchProfile}
+            />
+          </div>
         </div>
 
-        {/* Level / Profile Switcher */}
-        <LevelSwitcher
-          currentProfile={profile}
-          currentLevel={level}
-          onSwitchProfile={handleSwitchProfile}
-        />
+        {/* Living AI Voice Orb */}
+        <div className="z-10 shrink-0 self-center md:self-auto py-2 md:py-0">
+          <VoiceOrb size="md" statusText="Tutor Pronto (Clique)" />
+        </div>
       </div>
 
       {/* Mission of the Day */}
@@ -126,18 +139,19 @@ export default function DashboardPage() {
         targetLevel={level}
       />
 
-      {/* Quick Action Hub */}
+      {/* Quick Action Hub with Vibrant Halos */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 font-mono">
-          Ações Rápidas
+        <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-mono flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Módulos de Prática Diária</span>
         </h3>
         <QuickActions />
       </div>
 
       {/* Radar de Habilidades e Estatísticas Semanais */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Radar Card */}
-        <div className="lg:col-span-6 p-6 studio-card rounded-3xl flex flex-col justify-between">
+        {/* Radar Card with Aura */}
+        <div className="lg:col-span-6 p-6 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-xl shadow-amber-500/5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -145,11 +159,11 @@ export default function DashboardPage() {
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                   <span>English Radar (CEFR {level})</span>
                 </h3>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
+                <p className="text-xs text-zinc-400 mt-0.5 font-normal">
                   Diagnóstico equilibrado das suas 6 competências
                 </p>
               </div>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
                 Hoje
               </span>
             </div>
@@ -159,8 +173,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-[var(--text-muted)]">
-            <span>Objetivo do Perfil: <strong className="text-white">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
+          <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-zinc-300">
+            <span>Objetivo do Perfil: <strong className="text-amber-400 font-bold">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
             <Link href="/progress" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <span>Ver detalhes</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -170,19 +184,19 @@ export default function DashboardPage() {
 
         {/* Vocabulary SRS & Weekly Progress */}
         <div className="lg:col-span-6 space-y-6">
-          {/* SRS Memory Review Card */}
-          <div className="p-6 studio-card rounded-3xl border-amber-500/30">
+          {/* SRS Memory Review Card with Mint/Emerald Aura */}
+          <div className="p-6 rounded-3xl bg-[#0d0d14] border border-emerald-500/35 shadow-xl shadow-emerald-500/10">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-md shadow-emerald-500/20">
                   <Brain className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white">Revisão Ativa de Memória</h4>
-                  <p className="text-xs text-[var(--text-muted)]">Spaced Repetition System (SRS)</p>
+                  <p className="text-xs text-emerald-300/80 font-mono">Spaced Repetition System (SRS)</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-400/30">
+              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
                 {DASHBOARD_SRS_ITEMS.length} prontas
               </span>
             </div>
@@ -193,50 +207,48 @@ export default function DashboardPage() {
                   <button
                     key={item.id}
                     onClick={() => playPronunciation(item.word)}
-                    className="text-xs px-3 py-1.5 rounded-xl bg-[#14141d] border border-white/10 hover:border-amber-500/50 text-amber-300 font-mono flex items-center gap-2 cursor-pointer transition-all shadow-sm"
+                    className="text-xs px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 hover:border-emerald-400 text-emerald-200 font-mono flex items-center gap-2 cursor-pointer transition-all shadow-sm group"
                   >
                     <span>{item.word}</span>
-                    <Volume2 className="w-3.5 h-3.5 text-white/40 hover:text-amber-300" />
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110" />
                   </button>
                 ))}
               </div>
             </div>
 
-            <Button
-              variant="gold"
-              size="sm"
+            <button
               onClick={() => setIsSRSModalOpen(true)}
-              className="w-full"
+              className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-black tracking-wide shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
-              <span>Abrir Flashcards 3D</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+              <span>Praticar Flashcards 3D</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Weekly Goals Progress */}
-          <div className="p-6 studio-card rounded-3xl">
+          {/* Weekly Goals Progress with Solar Glow */}
+          <div className="p-6 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-400" />
+                <Clock className="w-4 h-4 text-amber-400" />
                 <span>Meta Semanal de Estudo</span>
               </h4>
-              <span className="text-xs font-mono font-bold text-emerald-400">65 / 100 min</span>
+              <span className="text-xs font-mono font-bold text-amber-400">65 / 100 min</span>
             </div>
 
-            <ProgressBar value={65} max={100} variant="emerald" size="md" showLabel={false} />
+            <ProgressBar value={65} max={100} variant="amber" size="md" showLabel={false} />
 
             <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-white/10 text-center">
               <div>
                 <div className="text-lg font-black text-white font-mono">45 min</div>
-                <div className="text-[11px] text-[var(--text-muted)]">Conversação</div>
+                <div className="text-[11px] text-zinc-400">Conversação</div>
               </div>
               <div>
                 <div className="text-lg font-black text-white font-mono">38</div>
-                <div className="text-[11px] text-[var(--text-muted)]">Palavras Ativas</div>
+                <div className="text-[11px] text-zinc-400">Palavras Ativas</div>
               </div>
               <div>
                 <div className="text-lg font-black text-white font-mono">92%</div>
-                <div className="text-[11px] text-[var(--text-muted)]">Retenção SRS</div>
+                <div className="text-[11px] text-zinc-400">Retenção SRS</div>
               </div>
             </div>
           </div>

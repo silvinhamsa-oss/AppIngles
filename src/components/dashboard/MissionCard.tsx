@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Sparkles, Clock, Volume2, Play, CheckCircle2 } from "lucide-react";
+import { Sparkles, Clock, Volume2, Play } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CEFRLevel } from "@/types/profile";
@@ -38,27 +38,28 @@ export function MissionCard({
   };
 
   return (
-    <div className="studio-card rounded-3xl p-6 sm:p-8 relative overflow-hidden border-amber-500/30">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative rounded-3xl p-6 sm:p-8 overflow-hidden bg-gradient-to-br from-[#18110b] via-[#0d0d12] to-[#0d0d12] border border-amber-500/35 shadow-2xl shadow-amber-500/10 group">
+      {/* Radiant Solar Aura Glow in the background */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/20 via-rose-500/10 to-transparent rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+      <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-gradient-to-tr from-purple-600/15 via-indigo-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
-        <div className="space-y-3.5 max-w-2xl">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="gold" size="md">
-              <Sparkles className="w-3.5 h-3.5" />
+        <div className="space-y-4 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold font-mono tracking-wide shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: "8s" }} />
               <span>MISSÃO DO DIA</span>
-            </Badge>
-            <Badge variant="secondary" size="sm">
-              <Clock className="w-3 h-3" />
-              <span>{durationMinutes} minutos</span>
-            </Badge>
-            <Badge variant="outline" size="sm">
-              <span className="font-mono font-bold text-amber-400">Nível {targetLevel}</span>
-            </Badge>
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white/90 border border-white/15 text-xs font-medium font-mono">
+              <Clock className="w-3 h-3 text-amber-300" />
+              <span>{durationMinutes} min</span>
+            </span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-950/80 text-purple-300 border border-purple-500/40 text-xs font-bold font-mono">
+              Nível {targetLevel}
+            </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
             {title}
           </h2>
 
@@ -67,11 +68,11 @@ export function MissionCard({
           </p>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Foco:</span>
+            <span className="text-xs text-amber-400/80 font-bold uppercase tracking-wider font-mono">Foco:</span>
             {skillsWorked.map((skill, idx) => (
               <span
                 key={idx}
-                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 font-medium"
+                className="text-xs px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-zinc-200 font-medium"
               >
                 {skill}
               </span>
@@ -83,10 +84,10 @@ export function MissionCard({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
           <button
             onClick={handlePreviewAudio}
-            className={`px-4 py-3.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`px-4 py-3.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
               isPlayingAudio
-                ? "bg-amber-500/20 border-amber-500 text-amber-300 animate-pulse"
-                : "bg-zinc-900/90 border-zinc-700/80 text-zinc-300 hover:text-white hover:bg-zinc-800"
+                ? "bg-amber-500/25 border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-500/30"
+                : "bg-white/10 hover:bg-white/15 border-white/15 text-white"
             }`}
             title="Ouvir instruções da missão em inglês"
           >
@@ -95,10 +96,10 @@ export function MissionCard({
           </button>
 
           <Link href="/talk" className="flex-1 sm:flex-none">
-            <Button variant="gold" size="lg" className="w-full shadow-xl shadow-amber-500/10">
-              <Play className="w-4 h-4 fill-current mr-1.5" />
+            <button className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-sm font-black tracking-wide shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+              <Play className="w-4 h-4 fill-zinc-950" />
               <span>Iniciar Sessão</span>
-            </Button>
+            </button>
           </Link>
         </div>
       </div>
