@@ -5,27 +5,72 @@ import { MissionCard } from "@/components/dashboard/MissionCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
 import { LevelSwitcher } from "@/components/dashboard/LevelSwitcher";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
+import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CEFRLevel, SkillRadarData } from "@/types/profile";
+import { VocabularyItem } from "@/types/vocabulary";
+import { playPronunciation } from "@/lib/audio";
 import {
-  Sparkles,
   TrendingUp,
-  Volume2,
   Brain,
-  CheckCircle2,
   Clock,
   ArrowRight,
   Flame,
-  Award,
+  Volume2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+
+const DASHBOARD_SRS_ITEMS: VocabularyItem[] = [
+  {
+    id: "1",
+    word: "actually",
+    translationPt: "na verdade / realmente",
+    definitionEn: "in fact or really",
+    partOfSpeech: "adverb",
+    cefrLevel: "B1",
+    exampleSentence: "Actually, I prefer having team syncs in the morning.",
+    contextNote: "/ˈæktʃu.ə.li/",
+  },
+  {
+    id: "2",
+    word: "although",
+    translationPt: "embora / apesar de que",
+    definitionEn: "despite the fact that",
+    partOfSpeech: "connector",
+    cefrLevel: "B1+",
+    exampleSentence: "Although it was raining, we went for a run.",
+    contextNote: "/ɔːlˈðoʊ/",
+  },
+  {
+    id: "3",
+    word: "exhausted",
+    translationPt: "extremamente cansado / exausto",
+    definitionEn: "very tired or having no energy left",
+    partOfSpeech: "adjective",
+    cefrLevel: "B1",
+    exampleSentence: "After 8 hours of coding, I was completely exhausted.",
+    contextNote: "/ɪɡˈzɔː.stɪd/",
+  },
+  {
+    id: "4",
+    word: "figure out",
+    translationPt: "descobrir / resolver / entender",
+    definitionEn: "to understand or find the solution to a problem",
+    partOfSpeech: "phrasal_verb",
+    cefrLevel: "B1",
+    exampleSentence: "We need to figure out how to optimize this API.",
+    contextNote: "/ˈfɪɡ.jɚ aʊt/",
+  },
+];
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<"parent" | "child">("parent");
   const [level, setLevel] = useState<CEFRLevel>("B1+");
+  const [isSRSModalOpen, setIsSRSModalOpen] = useState(false);
 
   const handleSwitchProfile = (newProfile: "parent" | "child", newLevel: CEFRLevel) => {
     setProfile(newProfile);
@@ -44,8 +89,8 @@ export default function DashboardPage() {
 
   const missionDescription =
     profile === "parent"
-      ? "Pratique conectivos (however, although) e o passado simples sem tradução mental com o tutor de IA."
-      : "Aprenda e pratique vocabulário básico de apresentação pessoal, saudações e frases simples.";
+      ? "Pratique conectivos de frase (however, although) e o passado simples sem tradução mental com o tutor de IA."
+      : "Aprenda e pratique vocabulário básico de apresentação pessoal, saudações e frases simples com áudio calmo.";
 
   const missionSkills =
     profile === "parent"
@@ -57,15 +102,13 @@ export default function DashboardPage() {
       {/* Top Greeting and Multi-Profile Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
-              {profile === "parent" ? "Olá, Welld! 👋" : "Olá, Campeão! 🚀"}
-            </h1>
-          </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-black text-zinc-100 tracking-tight">
+            {profile === "parent" ? "Olá, Welld! 👋" : "Olá, Campeão! 🚀"}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">
             {profile === "parent"
-              ? "Pronto para a sua missão de inglês de hoje? Foque em soltar a fala e recuperar palavras."
-              : "Vamos dar mais um passo nos fundamentos do inglês com calma e diversão!"}
+              ? "Pronto para a missão de hoje? Foque em soltar a fala e recuperar palavras."
+              : "Vamos avançar nos fundamentos do inglês com calma e diversão!"}
           </p>
         </div>
 
@@ -88,7 +131,7 @@ export default function DashboardPage() {
 
       {/* Quick Action Hub */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
           Ações Rápidas de Aprendizagem
         </h3>
         <QuickActions />
@@ -97,19 +140,19 @@ export default function DashboardPage() {
       {/* Radar de Habilidades e Estatísticas Semanais */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Radar Card */}
-        <Card variant="glass" className="lg:col-span-6 p-6 flex flex-col justify-between">
+        <div className="lg:col-span-6 p-6 studio-card rounded-3xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-amber-400" />
                   <span>English Radar (CEFR {level})</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Diagnóstico equilibrado das suas 6 habilidades essenciais
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Diagnóstico equilibrado das suas 6 competências
                 </p>
               </div>
-              <Badge variant="primary" size="sm">
+              <Badge variant="gold" size="sm">
                 Atualizado Hoje
               </Badge>
             </div>
@@ -119,87 +162,96 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-            <span>Objetivo do Perfil: <strong className="text-slate-200">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
-            <Link href="/progress" className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1">
+          <div className="pt-4 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
+            <span>Objetivo do Perfil: <strong className="text-zinc-200">{profile === "parent" ? "Rumo ao B2" : "Rumo ao A2"}</strong></span>
+            <Link href="/progress" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <span>Ver detalhes</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </Card>
+        </div>
 
         {/* Vocabulary SRS & Weekly Progress */}
         <div className="lg:col-span-6 space-y-6">
-          {/* SRS Memory Review Alert Card */}
-          <Card variant="bordered" className="p-6 bg-gradient-to-br from-slate-900/90 to-slate-950/90 border-cyan-500/20">
+          {/* SRS Memory Review Card */}
+          <div className="p-6 studio-card rounded-3xl border-amber-500/30">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
                   <Brain className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-slate-100">Revisão Ativa de Memória</h4>
-                  <p className="text-xs text-slate-400">Repetição Espaçada (SRS Algorithm)</p>
+                  <h4 className="text-base font-bold text-zinc-100">Revisão Ativa de Memória</h4>
+                  <p className="text-xs text-zinc-400">Spaced Repetition System (SRS)</p>
                 </div>
               </div>
-              <Badge variant="cyan" size="md">
-                {profile === "parent" ? "12 palavras hoje" : "5 palavras hoje"}
+              <Badge variant="gold" size="md">
+                {DASHBOARD_SRS_ITEMS.length} prontas hoje
               </Badge>
             </div>
 
             <div className="space-y-2 mb-5">
               <div className="flex flex-wrap gap-2">
-                {(profile === "parent"
-                  ? ["actually", "although", "unless", "however", "exhausted", "figure out"]
-                  : ["water", "family", "breakfast", "always", "because"]
-                ).map((word, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700/80 text-cyan-300 font-mono"
+                {DASHBOARD_SRS_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => playPronunciation(item.word)}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-amber-300 font-mono flex items-center gap-1.5 cursor-pointer transition-all"
                   >
-                    {word}
-                  </span>
+                    <span>{item.word}</span>
+                    <Volume2 className="w-3 h-3 text-zinc-500" />
+                  </button>
                 ))}
               </div>
             </div>
 
-            <Link href="/vocabulary">
-              <Button variant="glow" size="sm" className="w-full">
-                <span>Praticar Recordação Ativa</span>
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </Card>
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={() => setIsSRSModalOpen(true)}
+              className="w-full"
+            >
+              <span>Abrir Flashcards 3D</span>
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
 
           {/* Weekly Goals Progress */}
-          <Card variant="glass" className="p-6">
+          <div className="p-6 studio-card rounded-3xl">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400" />
+              <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-emerald-400" />
                 <span>Meta Semanal de Estudo</span>
               </h4>
-              <span className="text-xs font-bold text-amber-400">65 / 100 min</span>
+              <span className="text-xs font-bold text-emerald-400">65 / 100 min</span>
             </div>
 
-            <ProgressBar value={65} max={100} variant="amber" size="md" showLabel={false} />
+            <ProgressBar value={65} max={100} variant="emerald" size="md" showLabel={false} />
 
-            <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-slate-800/80 text-center">
+            <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-zinc-800 text-center">
               <div>
-                <div className="text-lg font-extrabold text-slate-100">45 min</div>
-                <div className="text-[11px] text-slate-400">Conversação</div>
+                <div className="text-lg font-black text-zinc-100 font-mono">45 min</div>
+                <div className="text-[11px] text-zinc-500">Conversação</div>
               </div>
               <div>
-                <div className="text-lg font-extrabold text-slate-100">38</div>
-                <div className="text-[11px] text-slate-400">Palavras Ativas</div>
+                <div className="text-lg font-black text-zinc-100 font-mono">38</div>
+                <div className="text-[11px] text-zinc-500">Palavras Ativas</div>
               </div>
               <div>
-                <div className="text-lg font-extrabold text-slate-100">92%</div>
-                <div className="text-[11px] text-slate-400">Retenção SRS</div>
+                <div className="text-lg font-black text-zinc-100 font-mono">92%</div>
+                <div className="text-[11px] text-zinc-500">Retenção SRS</div>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
+
+      {/* 3D Flashcard Modal */}
+      <FlashcardModal
+        isOpen={isSRSModalOpen}
+        onClose={() => setIsSRSModalOpen(false)}
+        items={DASHBOARD_SRS_ITEMS}
+      />
     </div>
   );
 }

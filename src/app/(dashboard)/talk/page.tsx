@@ -1,137 +1,248 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  MessageSquare,
   Mic,
+  MicOff,
   Send,
+  Volume2,
+  VolumeX,
   Sparkles,
   HelpCircle,
   Brain,
-  Volume2,
-  Settings2,
+  RotateCcw,
+  Zap,
+  Info,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
+import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { ConversationMode } from "@/types/conversation";
+
+interface MessageItem {
+  id: string;
+  sender: "ai" | "user";
+  content: string;
+  timestamp: string;
+  correction?: {
+    original: string;
+    suggested: string;
+    explanation: string;
+  };
+}
 
 export default function TalkPage() {
   const [mode, setMode] = useState<ConversationMode>("guided");
-  const [topic, setTopic] = useState("Trabalho e Projetos");
+  const [topic, setTopic] = useState("Projetos & Desenvolvimento");
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [persona, setPersona] = useState<"sarah" | "marcus">("sarah");
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState([
+  const speechRecognizerRef = useRef<{ stop: () => void } | null>(null);
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
+  const [messages, setMessages] = useState<MessageItem[]>([
     {
       id: "1",
       sender: "ai",
-      content: "Hello Welld! Good to see you today. What are the main projects you are currently focusing on this week?",
+      content:
+        "Hello Welld! Good to connect today. What are the key technical challenges you've been tackling on your current project?",
       timestamp: "14:20",
-    },
-    {
-      id: "2",
-      sender: "user",
-      content: "I am developing an AI-powered English learning application with Next.js and Supabase.",
-      timestamp: "14:21",
-    },
-    {
-      id: "3",
-      sender: "ai",
-      content: "That sounds like a fascinating project! How are you handling the AI provider integration to make sure it's flexible?",
-      timestamp: "14:22",
     },
   ]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isAiSpeaking]);
+
+  const handleSpeakText = (text: string) => {
+    setIsAiSpeaking(true);
+    const utter = playPronunciation(text, 0.95, persona === "sarah" ? "en-GB" : "en-US");
+    if (utter) {
+      utter.onend = () => setIsAiSpeaking(false);
+      utter.onerror = () => setIsAiSpeaking(false);
+    } else {
+      setTimeout(() => setIsAiSpeaking(false), 2000);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      speechRecognizerRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      setIsRecording(true);
+      const recognizer = startSpeechRecognition("en-US", {
+        onResult: (transcript, isFinal) => {
+          setInputMessage(transcript);
+        },
+        onError: (err) => {
+          console.warn("Speech recognition error:", err);
+          setIsRecording(false);
+        },
+        onEnd: () => {
+          setIsRecording(false);
+        },
+      });
+      speechRecognizerRef.current = recognizer;
+    }
+  };
+
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!inputMessage.trim()) return;
 
-    const newMsg = {
+    if (isRecording) {
+      speechRecognizerRef.current?.stop();
+      setIsRecording(false);
+    }
+
+    const userText = inputMessage.trim();
+    const userMsg: MessageItem = {
       id: String(Date.now()),
       sender: "user",
-      content: inputMessage,
+      content: userText,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInputMessage("");
 
-    // Simulate AI response
+    // Simulate AI response with natural pedagogical feedback
     setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: String(Date.now() + 1),
-          sender: "ai",
-          content: "That's a very solid architectural decision! By decoupling the provider interface, you ensure zero vendor lock-in.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+      let aiReply = "";
+      if (userText.toLowerCase().includes("next") || userText.toLowerCase().includes("code")) {
+        aiReply = "That's a very solid architectural approach! Keeping the AI provider layer decoupled allows you to swap LLM engines with zero friction. How are you handling latency in the conversation stream?";
+      } else {
+        aiReply = "I see your point! Speaking naturally without translating mental sentences is exactly how fluency develops. Tell me more about that.";
+      }
+
+      const aiMsg: MessageItem = {
+        id: String(Date.now() + 1),
+        sender: "ai",
+        content: aiReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+
+      if (autoPlayAudio) {
+        handleSpeakText(aiReply);
+      }
     }, 1000);
   };
 
+  const handleForgotWord = () => {
+    setHintMessage("💡 Dica de resgate: Quando você quer dizer que algo 'vale a pena', pense na expressão: 'It is worth it...'");
+    setTimeout(() => setHintMessage(null), 7000);
+  };
+
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex flex-col space-y-4">
-      {/* Top Bar with Modes and Tools */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 glass-panel rounded-2xl border border-slate-800">
-        <div className="flex items-center gap-2">
-          <Badge variant="primary">Modo: {mode.toUpperCase()}</Badge>
-          <span className="text-xs font-semibold text-slate-300">Tema: {topic}</span>
+    <div className="h-[calc(100vh-8.5rem)] flex flex-col space-y-3 max-w-5xl mx-auto">
+      {/* Studio Audio Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 studio-card rounded-2xl border-zinc-800">
+        <div className="flex items-center gap-3">
+          {/* Persona indicator */}
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-700 p-0.5 shadow-md shadow-amber-500/20">
+              <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-bold text-amber-400 text-xs">
+                {persona === "sarah" ? "GB" : "US"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-zinc-100 flex items-center gap-1.5">
+                <span>{persona === "sarah" ? "Sarah • Tutor de Conversação (UK)" : "Marcus • Tech Mentor (US)"}</span>
+              </div>
+              <p className="text-[11px] text-zinc-400">Modo: Conversa Guiada • Tema: {topic}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* I forgot the word button */}
+        {/* Live Visualizer and Audio Controls */}
+        <div className="flex items-center gap-3">
+          <AudioVisualizer isActive={isAiSpeaking || isRecording} variant={isRecording ? "emerald" : "amber"} />
+
+          <button
+            onClick={() => setAutoPlayAudio(!autoPlayAudio)}
+            className={`p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+              autoPlayAudio
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                : "bg-zinc-800 border-zinc-700 text-zinc-400"
+            }`}
+            title="Auto-fala da IA"
+          >
+            {autoPlayAudio ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            <span className="hidden sm:inline">Voz Ativa</span>
+          </button>
+
           <Button
             variant="outline"
             size="sm"
-            className="text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
-            onClick={() => alert("Dica da IA: 'It is when you do something without being locked into one single tool...' -> 'Vendor lock-in'")}
+            onClick={handleForgotWord}
+            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs"
           >
             <HelpCircle className="w-3.5 h-3.5 mr-1" />
             <span>Esqueci a palavra</span>
           </Button>
-
-          {/* Think in English toggle */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
-            <Brain className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Think in English ON</span>
-          </div>
         </div>
       </div>
 
-      {/* Chat Messages Stream */}
-      <Card variant="glass" className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 rounded-2xl flex flex-col justify-between">
+      {/* Hint Alert if triggered */}
+      {hintMessage && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 animate-in fade-in flex items-center justify-between">
+          <span>{hintMessage}</span>
+          <button onClick={() => setHintMessage(null)} className="text-amber-400 hover:text-amber-200">✕</button>
+        </div>
+      )}
+
+      {/* Main Conversation Stream */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 rounded-2xl studio-card flex flex-col justify-between">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex items-start gap-3 ${
+              className={`flex items-start gap-3.5 ${
                 msg.sender === "user" ? "flex-row-reverse" : "flex-row"
               }`}
             >
+              {/* Avatar */}
               <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                   msg.sender === "user"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                    ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
+                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                 }`}
               >
                 {msg.sender === "user" ? "EU" : "AI"}
               </div>
 
+              {/* Speech Bubble */}
               <div
-                className={`max-w-xl rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`max-w-xl rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${
                   msg.sender === "user"
-                    ? "bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/20"
-                    : "bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-none"
+                    ? "bg-amber-500 text-zinc-950 font-medium rounded-tr-none shadow-lg shadow-amber-500/10"
+                    : "bg-zinc-900/90 border border-zinc-800/90 text-zinc-200 rounded-tl-none"
                 }`}
               >
-                <p>{msg.content}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <p>{msg.content}</p>
+                  {msg.sender === "ai" && (
+                    <button
+                      onClick={() => handleSpeakText(msg.content)}
+                      className="p-1 rounded-lg text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer shrink-0 mt-0.5"
+                      title="Ouvir mensagem"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
                 <div
-                  className={`text-[10px] mt-1.5 ${
-                    msg.sender === "user" ? "text-indigo-200" : "text-slate-400"
+                  className={`text-[10px] mt-2 font-mono ${
+                    msg.sender === "user" ? "text-zinc-900/70" : "text-zinc-400"
                   }`}
                 >
                   {msg.timestamp}
@@ -139,33 +250,42 @@ export default function TalkPage() {
               </div>
             </div>
           ))}
+          <div ref={chatBottomRef} />
         </div>
 
-        {/* Input Bar */}
-        <form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-800/80 flex items-center gap-2">
-          <Button
+        {/* Input Bar with Speech-to-Text */}
+        <form onSubmit={handleSendMessage} className="pt-4 border-t border-zinc-800/80 flex items-center gap-2">
+          <button
             type="button"
-            variant={isRecording ? "danger" : "secondary"}
-            size="icon"
-            onClick={() => setIsRecording(!isRecording)}
-            title="Praticar Fala por Microfone"
+            onClick={toggleRecording}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+              isRecording
+                ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40"
+                : "bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-400 hover:text-amber-300"
+            }`}
+            title={isRecording ? "Parar Gravação" : "Falar no Microfone (Speech-to-Text)"}
           >
-            <Mic className={`w-4 h-4 ${isRecording ? "animate-pulse" : ""}`} />
-          </Button>
+            {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
 
           <input
             type="text"
-            placeholder="Digite sua resposta em inglês..."
+            placeholder={isRecording ? "Ouvindo você falar em inglês..." : "Digite em inglês ou aperte no microfone para falar..."}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="flex-1 bg-zinc-900/90 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30"
           />
 
-          <Button type="submit" variant="glow" size="icon" disabled={!inputMessage.trim()}>
+          <Button
+            type="submit"
+            variant="gold"
+            size="icon"
+            disabled={!inputMessage.trim()}
+          >
             <Send className="w-4 h-4" />
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
