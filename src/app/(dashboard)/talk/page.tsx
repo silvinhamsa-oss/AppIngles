@@ -38,6 +38,7 @@ export default function TalkPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [persona, setPersona] = useState<"sarah" | "marcus">("sarah");
   const [hintMessage, setHintMessage] = useState<string | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
 
   // Timer state
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -120,14 +121,55 @@ export default function TalkPage() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleSpeakText = (text: string) => {
+  const handleSpeakText = (text: string, msgId?: string) => {
+    if (!text || typeof window === "undefined") return;
+
+    // Se já estiver falando essa mesma mensagem, cancela/pausa
+    if (isAiSpeaking && playingMessageId === msgId) {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsAiSpeaking(false);
+      setPlayingMessageId(null);
+      return;
+    }
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
     setIsAiSpeaking(true);
+    if (msgId) setPlayingMessageId(msgId);
+
     const utter = playPronunciation(text, 0.95, persona === "sarah" ? "en-GB" : "en-US");
     if (utter) {
-      utter.onend = () => setIsAiSpeaking(false);
-      utter.onerror = () => setIsAiSpeaking(false);
+      utter.onend = () => {
+        setIsAiSpeaking(false);
+        setPlayingMessageId(null);
+      };
+      utter.onerror = () => {
+        setIsAiSpeaking(false);
+        setPlayingMessageId(null);
+      };
     } else {
-      setTimeout(() => setIsAiSpeaking(false), 2000);
+      setTimeout(() => {
+        setIsAiSpeaking(false);
+        setPlayingMessageId(null);
+      }, 2000);
+    }
+  };
+
+  const handleToggleMute = () => {
+    if (autoPlayAudio) {
+      // Cancela qualquer fala ativa imediatamente
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsAiSpeaking(false);
+      setPlayingMessageId(null);
+      setAutoPlayAudio(false);
+    } else {
+      setAutoPlayAudio(true);
     }
   };
 
@@ -391,16 +433,27 @@ export default function TalkPage() {
 
           <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
 
+          {/* Audio Auto-Play / Mute Button */}
           <button
-            onClick={() => setAutoPlayAudio(!autoPlayAudio)}
+            onClick={handleToggleMute}
             className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               autoPlayAudio
-                ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
-                : "bg-white/5 border-white/10 text-zinc-400"
+                ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm shadow-amber-500/10"
+                : "bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200"
             }`}
-            title="Auto-fala da IA"
+            title={autoPlayAudio ? "Áudio automático ativado (clique para mutar)" : "Modo Mudo ativado (somente leitura de texto)"}
           >
-            {autoPlayAudio ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            {autoPlayAudio ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span className="hidden sm:inline font-mono">Audio On</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="hidden sm:inline font-mono">Muted</span>
+              </>
+            )}
           </button>
 
           <Button
@@ -463,14 +516,33 @@ export default function TalkPage() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p>{msg.content || (isGenerating && msg.id === messages[messages.length - 1].id ? "Pensando..." : "")}</p>
+                  {msg.content ? (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ) : isGenerating && msg.id === messages[messages.length - 1].id ? (
+                    <div className="flex items-center gap-2 text-amber-300/90 font-mono text-xs py-1">
+                      <span className="animate-pulse">
+                        {persona === "sarah" ? "Sarah" : "Marcus"} is thinking...
+                      </span>
+                      <span className="flex gap-1 items-center">
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" />
+                      </span>
+                    </div>
+                  ) : null}
+
                   {msg.sender === "ai" && msg.content && (
                     <button
-                      onClick={() => handleSpeakText(msg.content)}
-                      className="p-1 rounded-lg text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer shrink-0 mt-0.5"
-                      title="Ouvir mensagem"
+                      type="button"
+                      onClick={() => handleSpeakText(msg.content, msg.id)}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5 ${
+                        playingMessageId === msg.id && isAiSpeaking
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          : "text-zinc-400 hover:text-amber-300 hover:bg-white/5"
+                      }`}
+                      title={playingMessageId === msg.id && isAiSpeaking ? "Pausar áudio" : "Ouvir pronúncia desta frase"}
                     >
-                      <Volume2 className="w-3.5 h-3.5" />
+                      <Volume2 className={`w-3.5 h-3.5 ${playingMessageId === msg.id && isAiSpeaking ? "animate-pulse text-amber-400" : ""}`} />
                     </button>
                   )}
                 </div>
@@ -497,14 +569,20 @@ export default function TalkPage() {
                 ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
                 : "bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 hover:text-amber-300"
             }`}
-            title={isRecording ? "Parar Gravação" : "Falar no Microfone (Speech-to-Text)"}
+            title={isRecording ? "Stop Recording" : "Speak in English (Speech-to-Text)"}
           >
             {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
 
           <input
             type="text"
-            placeholder={isRecording ? "Ouvindo você falar em inglês..." : "Digite em inglês ou aperte no microfone para falar..."}
+            placeholder={
+              isRecording
+                ? "Listening to you speak in English..."
+                : isGenerating
+                ? `${persona === "sarah" ? "Sarah" : "Marcus"} is thinking...`
+                : "Type in English or tap the microphone to speak..."
+            }
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             disabled={isGenerating}
