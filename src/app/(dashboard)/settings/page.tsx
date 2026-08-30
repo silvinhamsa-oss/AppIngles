@@ -927,14 +927,14 @@ export default function SettingsPage() {
 
           {/* Biometrics & Passkeys Security Card */}
           <div className="pt-6 border-t border-white/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#14141e] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
                   <Fingerprint className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Biometria & Face ID</span>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold text-white">Biometria & Face ID</h3>
                     {bioRegistered ? (
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                         ✓ Ativado
@@ -944,29 +944,31 @@ export default function SettingsPage() {
                         Não cadastrado
                       </span>
                     )}
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    Faça login instantâneo com 1 toque no celular usando Face ID, Touch ID ou leitor de digital.
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                    Faça login instantâneo com 1 toque usando Face ID, Touch ID ou digital.
                   </p>
                 </div>
               </div>
 
               {bioAvailable && (
-                <Button
-                  type="button"
-                  variant={bioRegistered ? "outline" : "gold"}
-                  onClick={handleToggleBiometrics}
-                  isLoading={isRegisteringBio}
-                  className="text-xs shrink-0"
-                >
-                  <Fingerprint className="w-4 h-4 mr-1.5" />
-                  <span>{bioRegistered ? "Desativar Biometria" : "Ativar neste Aparelho"}</span>
-                </Button>
+                <div className="w-full sm:w-auto shrink-0">
+                  <Button
+                    type="button"
+                    variant={bioRegistered ? "outline" : "gold"}
+                    onClick={handleToggleBiometrics}
+                    isLoading={isRegisteringBio}
+                    className="w-full sm:w-auto text-xs justify-center shadow-md shadow-amber-500/10"
+                  >
+                    <Fingerprint className="w-4 h-4 mr-1.5" />
+                    <span>{bioRegistered ? "Desativar Biometria" : "Ativar neste Aparelho"}</span>
+                  </Button>
+                </div>
               )}
             </div>
 
             {!bioAvailable && (
-              <div className="p-3 rounded-2xl bg-[#14141e] border border-white/10 text-xs text-zinc-400">
+              <div className="p-3.5 rounded-2xl bg-[#14141e] border border-white/10 text-xs text-zinc-400">
                 ℹ️ O leitor biométrico nativo (WebAuthn) não está disponível neste navegador ou exige conexão segura HTTPS.
               </div>
             )}
