@@ -104,23 +104,24 @@ export class OpenAICompatibleProvider implements AIProvider {
         if (response.status === 410 || response.status === 404 || response.status === 429) {
           // Tenta o próximo modelo do loop caso disponível (404/410: modelo indisponível, 429: limite de taxa)
           if (response.status === 429) {
-            lastError = new Error(`Limite de taxa excedido para o modelo '${currentModel}'. Tentando próximo modelo...`);
+            lastError = new Error(`Limite de taxa (429) excedido para o modelo '${currentModel}'. Tentando próximo modelo de contingência...`);
           } else {
-            lastError = new Error(`O modelo '${currentModel}' não está disponível na NVIDIA (${response.status}).`);
+            lastError = new Error(`O modelo '${currentModel}' não está disponível no provedor ${config.provider.toUpperCase()} (${response.status}).`);
           }
           continue;
         } else {
           throw new Error(`AI Provider Error (${response.status}): ${errorText}`);
         }
       } catch (err) {
-        if (err instanceof Error && !err.message.includes("não está disponível")) {
-          throw err;
+        if (err instanceof Error && !err.message.includes("não está disponível") && !err.message.includes("Limite de taxa")) {
+          lastError = err;
+        } else {
+          lastError = err instanceof Error ? err : new Error("Erro desconhecido");
         }
-        lastError = err instanceof Error ? err : new Error("Erro desconhecido");
       }
     }
 
-    throw lastError || new Error(`Não foi possível conectar com os modelos da NVIDIA.`);
+    throw lastError || new Error(`Não foi possível conectar com os modelos do provedor ${config.provider.toUpperCase()}.`);
   }
 
   async *stream(request: ChatRequest, config: AIProviderConfig): AsyncIterable<string> {
@@ -178,23 +179,23 @@ export class OpenAICompatibleProvider implements AIProvider {
         const errorText = await response.text();
         if (response.status === 410 || response.status === 404 || response.status === 429) {
           if (response.status === 429) {
-            lastErrorMsg = `Limite de taxa excedido para o modelo '${currentModel}'. Tentando próximo modelo...`;
+            lastErrorMsg = `Limite de taxa (429) excedido para o modelo '${currentModel}'. Tentando próximo modelo de contingência...`;
           } else {
-            lastErrorMsg = `O modelo '${currentModel}' não está disponível na sua conta NVIDIA (${response.status}).`;
+            lastErrorMsg = `O modelo '${currentModel}' não está disponível no provedor ${config.provider.toUpperCase()} (${response.status}).`;
           }
           continue;
         } else {
           throw new Error(`AI Streaming Error (${response.status}): ${errorText}`);
         }
       } catch (err) {
-        if (err instanceof Error && !err.message.includes("não está disponível")) {
+        if (err instanceof Error && !err.message.includes("não está disponível") && !err.message.includes("Limite de taxa")) {
           throw err;
         }
       }
     }
 
     if (!activeResponse || !activeResponse.body) {
-      throw new Error(lastErrorMsg || "Nenhum dos modelos da NVIDIA respondeu. Acesse Configurações para validar sua chave.");
+      throw new Error(lastErrorMsg || `Nenhum dos modelos do provedor ${config.provider.toUpperCase()} respondeu. Acesse Configurações para validar sua chave.`);
     }
 
     const reader = activeResponse.body.getReader();
