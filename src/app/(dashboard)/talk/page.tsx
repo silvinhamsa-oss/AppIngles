@@ -18,6 +18,7 @@ import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk/TopicSelector";
 import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
 import { WordLookupModal } from "@/components/talk/WordLookupModal";
+import { PronunciationFeedbackModal } from "@/components/talk/PronunciationFeedbackModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { createClient } from "@/lib/supabase/client";
 import confetti from "canvas-confetti";
@@ -44,6 +45,9 @@ export default function TalkPage() {
   // Contextual Touch Dictionary State
   const [lookupWord, setLookupWord] = useState<string | null>(null);
   const [lookupContext, setLookupContext] = useState<string | undefined>(undefined);
+
+  // Pronunciation Assessment State
+  const [pronunciationSentence, setPronunciationSentence] = useState<{ target: string; spoken: string } | null>(null);
 
   // Timer state
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -593,17 +597,39 @@ export default function TalkPage() {
                   ) : null}
 
                   {msg.sender === "ai" && msg.content && (
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setPronunciationSentence({ target: msg.content, spoken: "" })}
+                        className="p-1 sm:p-1.5 rounded-lg text-zinc-400 hover:text-amber-300 hover:bg-white/5 transition-colors cursor-pointer text-[10px] font-mono flex items-center gap-1"
+                        title="Treinar e avaliar pronúncia desta frase"
+                      >
+                        <span>🎯 Pronúncia</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSpeakText(msg.content, msg.id)}
+                        className={`p-1 sm:p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                          playingMessageId === msg.id && isAiSpeaking
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                            : "text-zinc-400 hover:text-amber-300 hover:bg-white/5"
+                        }`}
+                        title={playingMessageId === msg.id && isAiSpeaking ? "Pausar áudio" : "Ouvir pronúncia desta frase"}
+                      >
+                        <Volume2 className={`w-3.5 h-3.5 ${playingMessageId === msg.id && isAiSpeaking ? "animate-pulse text-amber-400" : ""}`} />
+                      </button>
+                    </div>
+                  )}
+
+                  {msg.sender === "user" && msg.content && (
                     <button
                       type="button"
-                      onClick={() => handleSpeakText(msg.content, msg.id)}
-                      className={`p-1 sm:p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5 ${
-                        playingMessageId === msg.id && isAiSpeaking
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                          : "text-zinc-400 hover:text-amber-300 hover:bg-white/5"
-                      }`}
-                      title={playingMessageId === msg.id && isAiSpeaking ? "Pausar áudio" : "Ouvir pronúncia desta frase"}
+                      onClick={() => setPronunciationSentence({ target: msg.content, spoken: msg.content })}
+                      className="p-1 rounded-lg text-zinc-950/70 hover:text-zinc-950 hover:bg-black/10 transition-colors cursor-pointer text-[10px] font-mono shrink-0"
+                      title="Analisar precisão da minha pronúncia"
                     >
-                      <Volume2 className={`w-3.5 h-3.5 ${playingMessageId === msg.id && isAiSpeaking ? "animate-pulse text-amber-400" : ""}`} />
+                      🎯 Score
                     </button>
                   )}
                 </div>
@@ -707,6 +733,14 @@ export default function TalkPage() {
         onClose={() => setLookupWord(null)}
         targetWord={lookupWord || ""}
         contextSentence={lookupContext}
+      />
+
+      {/* Phonetic Pronunciation Feedback & Coaching Modal */}
+      <PronunciationFeedbackModal
+        isOpen={!!pronunciationSentence}
+        onClose={() => setPronunciationSentence(null)}
+        targetSentence={pronunciationSentence?.target}
+        spokenSentence={pronunciationSentence?.spoken}
       />
     </div>
   );

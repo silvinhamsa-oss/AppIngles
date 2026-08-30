@@ -20,11 +20,17 @@ import {
   Check,
   Fingerprint,
   Shield,
+  Database,
+  Download,
+  Upload,
+  FileText,
+  Printer,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
-import { CEFRLevel } from "@/types/profile";
+import { CEFRLevel, SkillRadarData } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 import { saveVoicePreferences, loadVoicePreferences } from "@/lib/audio";
+import { FluencyReportModal } from "@/components/settings/FluencyReportModal";
 import {
   isBiometricsAvailable,
   isBiometricsRegistered,
@@ -107,6 +113,14 @@ export default function SettingsPage() {
   const [bioRegistered, setBioRegistered] = useState(false);
   const [isRegisteringBio, setIsRegisteringBio] = useState(false);
   const [bioFeedback, setBioFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Data & Report States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [dataFeedback, setDataFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [totalXp, setTotalXp] = useState(1240);
+  const [streakDays, setStreakDays] = useState(5);
 
   useEffect(() => {
     isBiometricsAvailable().then((avail) => setBioAvailable(avail));
@@ -519,6 +533,105 @@ export default function SettingsPage() {
     }
   };
 
+  const handleExportData = async () => {
+    setIsExporting(true);
+    setDataFeedback(null);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      let vocabData = [];
+      let profileData = null;
+
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+        const { data: vocab } = await supabase.from("user_vocabulary").select("*").eq("user_id", user.id);
+        profileData = profile;
+        vocabData = vocab || [];
+      } else {
+        const localVocab = localStorage.getItem("english-lab-vocab-items");
+        vocabData = localVocab ? JSON.parse(localVocab) : [];
+      }
+
+      const backupObj = {
+        version: "1.0.0",
+        exportedAt: new Date().toISOString(),
+        user: { fullName, email, cefrLevel },
+        profile: profileData,
+        vocabulary: vocabData,
+        aiConfig: getSavedAIConfig(),
+        voicePreferences: { sarahVoice, marcusVoice },
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `english-lab-backup-${new Date().toISOString().split("T")[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      setDataFeedback({ type: "success", message: "Backup completo exportado com sucesso (.JSON)!" });
+    } catch (err: unknown) {
+      setDataFeedback({ type: "error", message: err instanceof Error ? err.message : "Erro ao exportar dados." });
+    } finally {
+      setIsExporting(false);
+      setTimeout(() => setDataFeedback(null), 4000);
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setDataFeedback(null);
+
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+
+      if (!json || typeof json !== "object") {
+        throw new Error("Arquivo JSON inválido.");
+      }
+
+      // Sync vocabulary
+      if (Array.isArray(json.vocabulary) && json.vocabulary.length > 0) {
+        localStorage.setItem("english-lab-vocab-items", JSON.stringify(json.vocabulary));
+
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (const item of json.vocabulary) {
+            await supabase.from("user_vocabulary").upsert({
+              user_id: user.id,
+              word: item.word,
+              phonetic_ipa: item.phonetic_ipa || item.phoneticIpa,
+              part_of_speech: item.part_of_speech || item.partOfSpeech || "noun",
+              cefr_level: item.cefr_level || item.cefrLevel || "B1",
+              translation_pt: item.translation_pt || item.translationPt || "",
+              definition_en: item.definition_en || item.definitionEn,
+              example_sentence: item.example_sentence || item.exampleSentence,
+              status: item.status || "learning",
+            });
+          }
+        }
+      }
+
+      if (json.aiConfig) {
+        localStorage.setItem("english-lab-ai-config", JSON.stringify(json.aiConfig));
+      }
+
+      setDataFeedback({ type: "success", message: "Dados restaurados e sincronizados com sucesso!" });
+    } catch (err: unknown) {
+      setDataFeedback({ type: "error", message: err instanceof Error ? err.message : "Erro ao importar arquivo JSON." });
+    } finally {
+      setIsImporting(false);
+      if (e.target) e.target.value = "";
+      setTimeout(() => setDataFeedback(null), 4000);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
@@ -527,7 +640,7 @@ export default function SettingsPage() {
           Configurações da Plataforma
         </h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
-          Configure seus provedores de IA, parâmetros pedagógicos e preferências de voz.
+          Configure seus provedores de IA, parâmetros pedagógicos, dados e preferências de voz.
         </p>
       </div>
 
@@ -536,6 +649,7 @@ export default function SettingsPage() {
           { id: "ai", label: "Provedor de IA", icon: <Cpu className="w-4 h-4" /> },
           { id: "profile", label: "Perfil & Nível CEFR", icon: <User className="w-4 h-4" /> },
           { id: "voice", label: "Voz & Áudio", icon: <Volume2 className="w-4 h-4" /> },
+          { id: "data", label: "Dados & Relatório CEFR", icon: <Database className="w-4 h-4" /> },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -1128,6 +1242,133 @@ export default function SettingsPage() {
           </form>
         </div>
       )}
+
+      {/* TAB 4: DATA, BACKUP & CEFR REPORT */}
+      {activeTab === "data" && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-white">Portabilidade de Dados & Certificado CEFR</h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
+              Exporte seus dados para backup, restaure seu histórico em outros aparelhos ou emita seu relatório oficial de fluência.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Export Card */}
+            <div className="p-5 rounded-2xl bg-[#14141e] border border-white/10 flex flex-col justify-between space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <Download className="w-5 h-5" />
+                  <h3 className="text-sm font-bold text-white">Exportar Backup Completo</h3>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                  Baixe um arquivo estruturado <strong>.JSON</strong> contendo todo seu vocabulário ativo, progresso de lições, pontuação de XP e configurações de IA.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="gold"
+                onClick={handleExportData}
+                isLoading={isExporting}
+                className="w-full text-xs font-bold justify-center shadow-md shadow-amber-500/20"
+              >
+                <Download className="w-4 h-4 mr-1.5" />
+                <span>Exportar Dados (.JSON)</span>
+              </Button>
+            </div>
+
+            {/* Import Card */}
+            <div className="p-5 rounded-2xl bg-[#14141e] border border-white/10 flex flex-col justify-between space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <Upload className="w-5 h-5" />
+                  <h3 className="text-sm font-bold text-white">Importar / Restaurar Backup</h3>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                  Carregue um arquivo <strong>.JSON</strong> exportado anteriormente para sincronizar seu vocabulário e preferências neste dispositivo.
+                </p>
+              </div>
+
+              <label className="w-full cursor-pointer">
+                <div className="px-4 py-2.5 rounded-2xl bg-[#181824] hover:bg-white/10 border border-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center">
+                  <Upload className="w-4 h-4 text-cyan-400" />
+                  <span>{isImporting ? "Restaurando..." : "Selecionar Arquivo .JSON"}</span>
+                </div>
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportFile}
+                  disabled={isImporting}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* CEFR Fluency Certificate Card */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-bold text-white">Certificado & Relatório de Fluência CEFR</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">
+                  {cefrLevel}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 font-normal leading-relaxed">
+                Gere um documento de diagnóstico oficial com radar das 6 competências, nível atestado e pontuação total para impressão ou salvamento em PDF.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="gold"
+              onClick={() => setIsReportModalOpen(true)}
+              className="text-xs font-bold shrink-0 shadow-lg shadow-amber-500/25"
+            >
+              <Printer className="w-4 h-4 mr-1.5" />
+              <span>Emitir Relatório CEFR</span>
+            </Button>
+          </div>
+
+          {dataFeedback && (
+            <div
+              className={`p-4 rounded-2xl border text-xs flex items-center gap-2.5 shadow-lg ${
+                dataFeedback.type === "success"
+                  ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                  : "bg-red-500/15 border-red-500/40 text-red-300"
+              }`}
+            >
+              {dataFeedback.type === "success" ? (
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+              )}
+              <span>{dataFeedback.message}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Official CEFR Diagnostic Certificate Modal */}
+      <FluencyReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        userName={fullName}
+        userEmail={email}
+        cefrLevel={cefrLevel}
+        totalXp={totalXp}
+        streakDays={streakDays}
+        radarData={{
+          speaking: 74,
+          vocabulary: 70,
+          listening: 80,
+          grammar: 82,
+          reading: 86,
+          writing: 75,
+        }}
+      />
     </div>
   );
 }

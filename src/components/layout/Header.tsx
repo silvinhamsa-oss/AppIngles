@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Flame, Sparkles, GraduationCap, LogOut, Settings } from "lucide-react";
+import { Flame, Sparkles, GraduationCap, LogOut, Settings, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { CommandPalette } from "./CommandPalette";
 import { CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,6 +28,13 @@ export function Header({
   const [streakDays, setStreakDays] = useState(propStreak || 5);
   const [xpPoints, setXpPoints] = useState(propXp || 1420);
   const [userName, setUserName] = useState(propName || "Aluno");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handleToggle = () => setIsSearchOpen((prev) => !prev);
+    window.addEventListener("toggle-command-palette", handleToggle);
+    return () => window.removeEventListener("toggle-command-palette", handleToggle);
+  }, []);
 
   useEffect(() => {
     async function loadUserData() {
@@ -107,7 +115,15 @@ export function Header({
           <span>{xpPoints} XP</span>
         </div>
 
-        <ThemeToggle />
+        {/* Search / Command Palette Button */}
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="w-8 h-8 rounded-xl bg-[#121218] hover:bg-white/10 text-zinc-400 hover:text-amber-300 border border-white/10 transition-all flex items-center justify-center cursor-pointer"
+          title="Busca Global (Cmd + K)"
+        >
+          <Search className="w-4 h-4" />
+        </button>
 
         {/* Settings Gear Button */}
         <Link
@@ -143,6 +159,12 @@ export function Header({
           <LogOut className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Global Command Palette Search Modal */}
+      <CommandPalette
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </header>
   );
 }

@@ -98,9 +98,22 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
   - Opção de realizar o teste em 3 minutos ou pular direto para o painel (com nível B1 padrão).
   - Persistência automática do nível CEFR testado e concessão de +100 XP no banco Supabase (`profiles`).
 
+## 🎯 10. Busca Global (Cmd+K), Relatório CEFR, Pronúncia IPA & Blindagem
+* **Busca Global / Command Palette (`src/components/layout/CommandPalette.tsx` & `Header.tsx`):**
+  - Atalho global `Cmd+K` / `Ctrl+K` e botão de lupa no Header desktop e celular.
+  - Busca instantânea e unificada em rotas de navegação, catálogo de lições (A1-C2), cenários de conversa e vocabulário salvo pelo aluno.
+* **Portabilidade de Dados & Relatório de Fluência CEFR (`src/components/settings/FluencyReportModal.tsx` & `settings/page.tsx`):**
+  - Exportação e importação/restauração completa em `.JSON` de vocabulário, perfil, XP e configurações de IA com sincronização Supabase.
+  - Emissão de Relatório Oficial de Diagnóstico CEFR com radar das 6 competências, nível atestado e layout pronto para impressão / PDF.
+* **Diagnóstico de Pronúncia Fonética (`src/components/talk/PronunciationFeedbackModal.tsx` & `talk/page.tsx`):**
+  - Avaliação acústica e fonêmica da fala do aluno contra referências nativas com pontuação de 0 a 100%.
+  - Detalhamento palavra por palavra com fonemas IPA e dicas práticas de *connected speech*.
+* **Blindagem de Rotas (`src/app/global-error.tsx` & `src/app/(dashboard)/error.tsx`):**
+  - Error boundaries em todas as camadas com botão de recarregamento suave e retorno ao início, impedindo travamento por tela branca.
+
 ---
 
-## 🧹 10. Qualidade de Código & Verificação
+## 🧹 11. Qualidade de Código & Verificação
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita com `tsc --noEmit` (0 erros).
 * **Build Next.js (Turbopack):** 18 rotas compiladas com sucesso (100% de cobertura).

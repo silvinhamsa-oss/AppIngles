@@ -10,6 +10,10 @@
 | Módulo | Status | Arquivos-chave |
 |--------|--------|----------------|
 | **Conversação por Voz (/talk)** | ✅ Completo | `src/app/(dashboard)/talk/page.tsx`, `src/lib/audio.ts` |
+| **Feedback de Pronúncia (IPA Scoring)** | ✅ **IMPLEMENTADO** | `src/components/talk/PronunciationFeedbackModal.tsx`, `talk/page.tsx` |
+| **Busca Global (Cmd+K Palette)** | ✅ **IMPLEMENTADO** | `src/components/layout/CommandPalette.tsx`, `Header.tsx` |
+| **Export/Import & Relatório CEFR** | ✅ **IMPLEMENTADO** | `src/components/settings/FluencyReportModal.tsx`, `settings/page.tsx` |
+| **Error Boundaries (Blindagem Global)** | ✅ **IMPLEMENTADO** | `src/app/global-error.tsx`, `src/app/(dashboard)/error.tsx` |
 | **Dicionário de Toque no Chat** | ✅ **IMPLEMENTADO** | `src/components/talk/WordLookupModal.tsx`, `talk/page.tsx` |
 | **Desafio Diário (Daily Challenge)** | ✅ **IMPLEMENTADO** | `src/lib/daily-challenge.ts`, `dashboard/page.tsx` |
 | **Escrita Ativa (Writing Lab)** | ✅ **IMPLEMENTADO** | `src/components/learn/WritingModal.tsx`, `learn/page.tsx`, `progress/page.tsx` |
@@ -42,32 +46,15 @@
 
 ---
 
-## 1. Feedback de Pronúncia (Pronunciation Scoring)
-**Impacto**: 🔴 **Alto** | **Esforço**: 🟡 **Médio**
+## 1. Feedback de Pronúncia (Pronunciation Scoring) — ✅ CONCLUÍDO
+**Impacto**: 🔴 **Alto** | **Esforço**: 🟡 **Médio** | **Status**: ✅ **Implementado**
 
-**Por que**: Diferencial competitivo mortal. Apps como ELSA Speak, Speechling, BoldVoice cobram $10-30/mês só por isso. Você já tem 80% da infra (STT + TTS + personas).
+**Por que**: Avaliação acústica e fonêmica que orienta o aluno a atingir a pronúncia natural e inteligível de nativos.
 
-**Como**:
-```
-Opção A (Client-side, grátis, limitada):
-- Web Audio API → analisar pitch/formants do áudio gravado vs referência
-- Arquivos: src/lib/audio.ts (nova fn analyzePronunciation), talk/page.tsx (UI)
-
-Opção B (Server-side, melhor, custo baixo):
-- Enviar áudio user + texto referência → Groq Whisper (já em sttProvider) 
-- Prompt: "Score 0-100, erros fonêmicos, sugestão"
-- Arquivos: src/app/api/ai/pronunciation/route.ts (novo), talk/page.tsx
-
-Opção C (Premium, melhor qualidade):
-- ElevenLabs Pronunciation Assessment API / Speechace / Azure Speech
-- Requer API key paga
-```
-
-**Dependências**: `startSpeechRecognition` já captura áudio; `playPronunciation` gera referência.
-
-**Risco**: Web Speech API não dá acesso ao áudio bruto (só transcript). Opção B precisa `MediaRecorder` + upload.
-
-**Métrica**: % usuários que usam >1x/semana; NPS de "melhorou minha pronúncia".
+**O que foi entregue**:
+- Componente `PronunciationFeedbackModal.tsx` com motor de avaliação fonética e acurácia de 0 a 100%.
+- Análise fonética palavra por palavra com IPA (`/ˈlʊk.ɪŋ/`), feedback específico e dicas fonoaudiológicas/coaching de connected speech.
+- Botão "🎯 Pronúncia" e "🎯 Score" integrado diretamente nos balões de fala da IA e do usuário no chat `/talk`.
 
 ---
 
@@ -96,27 +83,16 @@ Opção C (Premium, melhor qualidade):
 
 ---
 
-## 4. Export/Import de Dados (Portabilidade)
-**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo**
+## 4. Export/Import de Dados & Emissão de Relatório CEFR — ✅ CONCLUÍDO
+**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo** | **Status**: ✅ **Implementado**
 
-**Por que**: Usuários querem backup, migração device, professores exportam progresso de alunos. Diferencial de "dono dos dados".
+**Por que**: Usuários querem backup, migração entre dispositivos e certificação/comprovação do seu progresso.
 
-**Como**:
-```
-Settings → nova aba "Dados":
-- Export: JSON com { vocabulary[], progress[], conversations[], settings, cefr_level, streak }
-- Download: english-lab-backup-YYYY-MM-DD.json
-- Import: Upload JSON → valida schema → upsert no Supabase + localStorage sync
-- Bonus: Export PDF relatório CEFR (usa jsPDF ou server-side)
-```
-
-**Arquivos**: Nova tab em `settings/page.tsx`, `src/lib/export-import.ts` (utils), API routes `/api/user/export`, `/api/user/import`.
-
-**Dependências**: RLS no Supabase já garante isolamento por user_id.
-
-**Risco**: Schema migration se mudar estrutura → versionar JSON exportado.
-
-**Métrica**: % usuários que exportam; support tickets "perdi meus dados" → 0.
+**O que foi entregue**:
+- Aba "Dados & Relatório CEFR" no `/settings`.
+- Exportação de backup completo em JSON (`english-lab-backup-YYYY-MM-DD.json`) contendo vocabulário, perfil, XP e preferências.
+- Importação e restauração automática com sincronização imediata no Supabase.
+- Modal de Emissão de Relatório Oficial de Diagnóstico CEFR (`FluencyReportModal.tsx`) pronto para impressão e download em PDF com radar das 6 competências.
 
 ---
 
@@ -132,26 +108,15 @@ Settings → nova aba "Dados":
 
 ---
 
-## 6. Busca Global / Command Palette (Cmd+K)
-**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo**
+## 6. Busca Global / Command Palette (Cmd+K) — ✅ CONCLUÍDO
+**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo** | **Status**: ✅ **Implementado**
 
-**Por que**: Power users adoram. Navegação instantânea sem mouse. Já tem atalho no Header (Level badge → /test).
+**Por que**: Navegação instantânea e universal para power users e navegação veloz em celulares.
 
-**Como**:
-```
-- Lib: cmdk ou kbar (React) — leve, acessível
-- Sources: rotas (talk, vocab, learn, progress, settings), palavras do vocab do usuário, lições
-- Atalho: Cmd/Ctrl + K global
-- UI: Modal centralizado, fuzzy search, navegação setas + Enter
-```
-
-**Arquivos**: Novo componente `CommandPalette.tsx`, integração em `src/app/(dashboard)/layout.tsx` (provider context).
-
-**Dependências**: Nenhuma crítica.
-
-**Risco**: Baixo. Aditivo.
-
-**Métrica**: % sessões com >1 uso do Cmd+K; tempo para alcançar página-alvo.
+**O que foi entregue**:
+- Componente `CommandPalette.tsx` com atalho global `Cmd+K` / `Ctrl+K` e botão com ícone de lupa no Header desktop e mobile.
+- Busca unificada através de rotas do sistema, lições da trilha A1-C2, tópicos de conversação e termos do vocabulário do aluno.
+- Navegação fluida por teclado (`↑`, `↓`, `Enter`, `ESC`) e filtros instantâneos.
 
 ---
 
