@@ -52,8 +52,8 @@ export function AddWordModal({ isOpen, onClose, onAddWord }: AddWordModalProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#0b0b10] border border-amber-500/40 p-6 sm:p-8 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+      <div className="relative w-full max-w-lg max-h-[85dvh] overflow-y-auto rounded-3xl bg-[#0b0b10] border border-amber-500/40 p-5 sm:p-8 shadow-2xl space-y-5">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white cursor-pointer"
