@@ -141,7 +141,7 @@ export default function TalkPage() {
     setIsAiSpeaking(true);
     if (msgId) setPlayingMessageId(msgId);
 
-    const utter = playPronunciation(text, 0.95, persona === "sarah" ? "en-GB" : "en-US");
+    const utter = playPronunciation(text, 0.95, persona === "sarah" ? "en-GB" : "en-US", persona);
     if (utter) {
       utter.onend = () => {
         setIsAiSpeaking(false);

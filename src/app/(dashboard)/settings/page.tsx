@@ -22,6 +22,7 @@ import {
 import { AIProviderType } from "@/types/ai";
 import { CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
+import { saveVoicePreferences, loadVoicePreferences } from "@/lib/audio";
 
 function getSavedAIConfig() {
   if (typeof window === "undefined") return null;
@@ -87,7 +88,10 @@ export default function SettingsPage() {
 
   // Voice States
   const [sttProvider, setSttProvider] = useState("web-speech");
-  const [ttsVoice, setTtsVoice] = useState("browser-samantha");
+  const [sarahVoice, setSarahVoice] = useState<string | null>(null);
+  const [marcusVoice, setMarcusVoice] = useState<string | null>(null);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
 
   useEffect(() => {
@@ -147,6 +151,35 @@ export default function SettingsPage() {
     }
 
     loadUserProfileAndAIConfig();
+  }, []);
+
+  // Load available voices and saved preferences
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setVoicesLoaded(true);
+      return;
+    }
+
+    // Load voices (may be empty initially, will be populated when voiceschange fires)
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      setAvailableVoices(voices);
+    }
+
+    // Load saved voice preferences
+    try {
+      const saved = localStorage.getItem("english-lab-voice-preferences");
+      if (saved) {
+        const preferences = JSON.parse(saved);
+        setSarahVoice(preferences.sarahVoice ?? null);
+        setMarcusVoice(preferences.marcusVoice ?? null);
+      }
+    } catch (e) {
+      console.warn("Could not load voice preferences:", e);
+    }
+
+    setVoicesLoaded(true);
   }, []);
 
   const handleSelectModel = (selectedModelId: string) => {
@@ -419,10 +452,16 @@ export default function SettingsPage() {
 
   const handleSaveVoiceConfig = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Save voice preferences for TTS
+    saveVoicePreferences(sarahVoice, marcusVoice);
+
+    // Save STT config (keeping existing structure for compatibility)
     localStorage.setItem(
       "english-lab-voice-config",
-      JSON.stringify({ sttProvider, ttsVoice })
+      JSON.stringify({ sttProvider, ttsVoice: "browser-native" }) // Keep ttsVoice for backward compatibility
     );
+
     setVoiceSaveSuccess(true);
     setTimeout(() => setVoiceSaveSuccess(false), 3000);
   };
@@ -866,15 +905,98 @@ export default function SettingsPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Síntese de Voz (Text-to-Speech)
                 </label>
-                <select
-                  value={ttsVoice}
-                  onChange={(e) => setTtsVoice(e.target.value)}
-                  className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="browser-samantha">Voz Nativa do Navegador (Samantha / Daniel UK / Google US)</option>
-                  <option value="elevenlabs">ElevenLabs AI Voice (Ultra Realista)</option>
-                  <option value="openai-alloy">OpenAI TTS (Alloy / Nova / Echo)</option>
-                </select>
+                {voicesLoaded ? (
+                  <>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                        Voz da Sarah (UK)
+                      </label>
+                      <select
+                        value={sarahVoice ?? ""}
+                        onChange={(e) => setSarahVoice(e.target.value)}
+                        className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
+                      >
+                        <option value="">Automática (recomendado)</option>
+                        {availableVoices
+                          .filter(v => v.lang.startsWith("en-GB"))
+                          .map(voice => (
+                            <option key={voice.name} value={voice.name}>
+                              {voice.name} ({voice.lang})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                        Voz do Marcus (US)
+                      </label>
+                      <select
+                        value={marcusVoice || ""}
+                        onChange={(e) => setMarcusVoice(e.target.value)}
+                        className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
+                      >
+                        <option value="">Automática (recomendado)</option>
+                        {availableVoices
+                          .filter(v => v.lang.startsWith("en-US"))
+                          .map(voice => (
+                            <option key={voice.name} value={voice.name}>
+                              {voice.name} ({voice.lang})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                            // Test Sarah's voice
+                            if (sarahVoice) {
+                              const utterance = new SpeechSynthesisUtterance("Hello, this is Sarah speaking.");
+                              utterance.lang = "en-GB";
+                              utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === sarahVoice)!;
+                              window.speechSynthesis.speak(utterance);
+                            } else {
+                              const utterance = new SpeechSynthesisUtterance("Hello, this is Sarah speaking (automatic voice).");
+                              utterance.lang = "en-GB";
+                              window.speechSynthesis.speak(utterance);
+                            }
+                          }
+                        }}
+                        className="text-xs font-muted"
+                      >
+                        ▶️ Testar Sarah
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                            // Test Marcus's voice
+                            if (marcusVoice) {
+                              const utterance = new SpeechSynthesisUtterance("Hello, this is Marcus speaking.");
+                              utterance.lang = "en-US";
+                              utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === marcusVoice)!;
+                              window.speechSynthesis.speak(utterance);
+                            } else {
+                              const utterance = new SpeechSynthesisUtterance("Hello, this is Marcus speaking (automatic voice).");
+                              utterance.lang = "en-US";
+                              window.speechSynthesis.speak(utterance);
+                            }
+                          }
+                        }}
+                        className="text-xs font-muted"
+                      >
+                        ▶️ Testar Marcus
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-xs text-center text-zinc-400 pt-4">
+                    Carregando vozes disponíveis...
+                  </div>
+                )}
               </div>
             </div>
 
