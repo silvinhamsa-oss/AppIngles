@@ -43,7 +43,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const baseUrl = this.getBaseUrl(config);
     const headers = this.getHeaders(config);
 
-    const candidateModels = [config.model || "meta-llama/llama-3.3-70b-instruct"];
+    const candidateModels = [config.model || (config.provider === "groq" ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct")];
     if (config.provider === "nvidia") {
       const nvidiaFallbacks = [
         "meta/llama-3.1-70b-instruct",
@@ -52,6 +52,17 @@ export class OpenAICompatibleProvider implements AIProvider {
         "deepseek-ai/deepseek-r1",
       ];
       for (const m of nvidiaFallbacks) {
+        if (!candidateModels.includes(m)) candidateModels.push(m);
+      }
+    } else if (config.provider === "groq") {
+      const groqFallbacks = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it",
+      ];
+      for (const m of groqFallbacks) {
         if (!candidateModels.includes(m)) candidateModels.push(m);
       }
     }
@@ -112,7 +123,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const baseUrl = this.getBaseUrl(config);
     const headers = this.getHeaders(config);
 
-    const candidateModels = [config.model || "meta-llama/llama-3.3-70b-instruct"];
+    const candidateModels = [config.model || (config.provider === "groq" ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct")];
     if (config.provider === "nvidia") {
       const nvidiaFallbacks = [
         "meta/llama-3.1-70b-instruct",
@@ -121,6 +132,17 @@ export class OpenAICompatibleProvider implements AIProvider {
         "deepseek-ai/deepseek-r1",
       ];
       for (const m of nvidiaFallbacks) {
+        if (!candidateModels.includes(m)) candidateModels.push(m);
+      }
+    } else if (config.provider === "groq") {
+      const groqFallbacks = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it",
+      ];
+      for (const m of groqFallbacks) {
         if (!candidateModels.includes(m)) candidateModels.push(m);
       }
     }
