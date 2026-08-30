@@ -5,14 +5,23 @@ import { AIConfig, AIProviderType, ChatMessage } from "@/lib/ai/types";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, scenarioId, persona, config, providerConfig, stream = true } = body;
+    const {
+      messages,
+      scenarioId,
+      topic,
+      level,
+      persona = "sarah",
+      config,
+      providerConfig,
+      stream = true,
+    } = body;
     const clientConfig = config || providerConfig;
 
     // Resolve AI configuration with server-side environment variables as fallback
     const activeConfig: AIConfig = {
       provider: (clientConfig?.provider as AIProviderType) || (process.env.AI_PROVIDER as AIProviderType) || "openrouter",
       apiKey: clientConfig?.apiKey || process.env.AI_API_KEY || "",
-      model: clientConfig?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct",
+      model: clientConfig?.model || process.env.AI_MODEL || (clientConfig?.provider === "nvidia" ? "nvidia/llama-3.1-nemotron-70b-instruct" : "meta-llama/llama-3.3-70b-instruct"),
       baseUrl: clientConfig?.baseUrl || process.env.AI_BASE_URL,
       temperature: clientConfig?.temperature ?? 0.7,
       maxTokens: clientConfig?.maxTokens ?? 500,
@@ -22,17 +31,16 @@ export async function POST(req: NextRequest) {
     if (!activeConfig.apiKey && activeConfig.provider !== "ollama") {
       return NextResponse.json(
         {
-          error: "NO_API_KEY_CONFIGURED",
-          message: "Nenhuma chave de IA configurada. Por favor, insira sua chave de API em Configurações.",
+          error: "Nenhuma chave de IA configurada. Por favor, acerte sua API Key na aba Configurações.",
         },
         { status: 400 }
       );
     }
 
     const systemPrompt = AIRouter.buildSystemPrompt({
-      scenarioId: scenarioId || "free-chat",
+      scenarioId: topic || scenarioId || "Free Conversation",
       persona: persona || "sarah",
-      userLevel: "B1+",
+      userLevel: level || "B1+",
     });
 
     const fullMessages: ChatMessage[] = [

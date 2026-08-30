@@ -208,8 +208,25 @@ export default function TalkPage() {
         }),
       });
 
-      if (!res.ok || !res.body) {
-        throw new Error("Erro na resposta do servidor.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const errorMsg = errData.error || errData.message || `Erro do servidor (${res.status}).`;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? {
+                  ...msg,
+                  content: `⚠️ Não foi possível obter resposta da IA: ${errorMsg}\n\n👉 Acesse o menu Configurações para validar sua chave de API e modelo.`,
+                }
+              : msg
+          )
+        );
+        setIsGenerating(false);
+        return;
+      }
+
+      if (!res.body) {
+        throw new Error("Corpo da resposta vazio.");
       }
 
       const reader = res.body.getReader();
@@ -233,7 +250,14 @@ export default function TalkPage() {
           if (trimmed.startsWith("data: ")) {
             try {
               const data = JSON.parse(trimmed.slice(6));
-              if (data.content) {
+              if (data.error) {
+                fullAiText = `⚠️ Erro do provedor de IA: ${data.error}`;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === aiMsgId ? { ...msg, content: fullAiText } : msg
+                  )
+                );
+              } else if (data.content) {
                 fullAiText += data.content;
                 setMessages((prev) =>
                   prev.map((msg) =>
@@ -247,18 +271,18 @@ export default function TalkPage() {
       }
 
       setIsGenerating(false);
-      if (autoPlayAudio && fullAiText) {
+      if (autoPlayAudio && fullAiText && !fullAiText.startsWith("⚠️")) {
         handleSpeakText(fullAiText);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("AI response error:", err);
+      const errorMsg = err instanceof Error ? err.message : "Erro desconhecido de conexão com a IA.";
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === aiMsgId
             ? {
                 ...msg,
-                content:
-                  "I understand what you mean! Developing fluency takes constant repetition and natural interaction. What would you like to explore next?",
+                content: `⚠️ Falha ao se comunicar com o provedor de IA: ${errorMsg}\n\n👉 Vá em Configurações > Provedor de IA e teste sua conexão.`,
               }
             : msg
         )
