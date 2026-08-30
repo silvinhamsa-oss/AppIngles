@@ -16,6 +16,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
 import confetti from "canvas-confetti";
+import { createClient } from "@/lib/supabase/client";
 
 
 interface Question {
@@ -134,7 +135,7 @@ export default function PlacementTestPage() {
     }
   };
 
-  const handleFinishSpeaking = () => {
+  const handleFinishSpeaking = async () => {
     // Calculate estimated CEFR level based on quiz score + speaking length
     let finalLvl: CEFRLevel = "A1";
     if (score === 1) finalLvl = "A2";
@@ -155,6 +156,29 @@ export default function PlacementTestPage() {
       origin: { y: 0.6 },
       colors: ["#f59e0b", "#10b981", "#ffffff"],
     });
+
+    // Persist new level and +100 XP to Supabase
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: currentProfile } = await supabase
+          .from("profiles")
+          .select("xp_points")
+          .eq("id", user.id)
+          .single();
+
+        const currentXp = currentProfile?.xp_points || 1240;
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          cefr_level: finalLvl,
+          xp_points: currentXp + 100,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.warn("Could not save placement test level to Supabase:", err);
+    }
   };
 
   return (
