@@ -1,5 +1,7 @@
 # 🎙️ English Lab — Studio Voice & AI English Tutor
 
+[![CI Pipeline](https://github.com/welloliver1974/appingles/actions/workflows/ci.yml/badge.svg)](https://github.com/welloliver1974/appingles/actions/workflows/ci.yml)
+
 > **Tutor particular de inglês de alto padrão com conversação imersiva por voz, repetição espaçada (SRS) e aplicativo PWA instalável.**
 
 ---
