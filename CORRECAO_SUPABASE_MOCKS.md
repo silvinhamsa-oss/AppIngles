@@ -9,7 +9,7 @@ Os arquivos `src/lib/supabase/client.ts` e `src/lib/supabase/server.ts` ainda po
 ## Solução
 Remover completamente os valores de fallback hardcoded e lançar um erro claro quando as variáveis de ambiente obrigatórias estiverem faltando.
 
-## Arquivos a Corrigir
+## Arquivos Corrigidos
 
 ### 1. src/lib/supabase/client.ts
 
@@ -130,15 +130,50 @@ export async function createClient() {
 }
 ```
 
+## Arquivo Adicional Encontrado
+
+### 3. scripts/test-supabase.mjs (Script de Teste)
+
+**Código Atual (problemático):**
+```javascript
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://mgotoricuqyeykcfwfaf.supabase.co";
+const supabaseAnonKey = "sb_publishable_1c9vpm6uQ2F8uIYDa6a_hg_KBTCSnC7";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+**Observação Importante:**
+Este é um **script de teste** localizado em `/scripts/` e provavelmente usado para verificações manuais de conectividade. Embora não afete diretamente a aplicação de produção, recomenda-se melhorá-lo para seguir as mesmas boas práticas:
+
+**Sugestão de Melhoria:**
+```javascript
+import { createClient } from "@supabase/supabase-js";
+
+// Usar variáveis de ambiente com fallback explícito para teste local
+const supabaseUrl = process.env.SUPABASE_TEST_URL || "https://mgotoricuqyeykcfwfaf.supabase.co";
+const supabaseAnonKey = process.env.SUPABASE_TEST_ANON_KEY || "sb_publishable_1c9vpm6uQ2F8uIYDa6a_hg_KBTCSnC7";
+
+// Adicionar aviso claro se estiver usando fallbacks
+if (!process.env.SUPABASE_TEST_URL || !process.env.SUPABASE_TEST_ANON_KEY) {
+  console.warn("⚠️ Usando valores hardcoded para teste. Defina SUPABASE_TEST_URL e SUPABASE_TEST_ANON_KEY para usar seu próprio projeto.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ... resto do script permanece o mesmo
+```
+
 ## Instruções de Aplicação
 1. Substituir o conteúdo de `src/lib/supabase/client.ts` pelo código corrigido acima
 2. Substituir o conteúdo de `src/lib/supabase/server.ts` pelo código corrigido acima
 3. Garantir que as variáveis de ambiente `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` estejam definidas no arquivo `.env.local` (não versionado)
 4. Testar a aplicação localmente e em ambientes de staging para garantir que ela falhe claramente quando as variáveis de ambiente estiverem faltando
+5. (Opcional) Melhorar o script de teste em `scripts/test-supabase.mjs` seguindo a sugestão acima
 
 ## Impacto
-- ✅ Elimina o risco de conexão acidental a projetos Supabase errados
-- ✅ Fornece feedback claro e imediato quando há problemas de configuração
+- ✅ Elimina o risco de conexão acidental a projetos Supabase errados na aplicação de produção
+- ✅ Fornece feedback claro e imediato quando há problemas de configuração na produção
 - ✅ Mantém a mesma funcionalidade quando as variáveis de ambiente estão corretamente definidas
 - ✅ Segue o princípio de "fail fast" para melhorar a depuração e a confiabilidade
 

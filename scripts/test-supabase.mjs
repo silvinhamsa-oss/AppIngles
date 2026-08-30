@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://mgotoricuqyeykcfwfaf.supabase.co";
-const supabaseAnonKey = "sb_publishable_1c9vpm6uQ2F8uIYDa6a_hg_KBTCSnC7";
+// Usar variáveis de ambiente com fallback para verificação manual
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_TEST_URL || "https://mgotoricuqyeykcfwfaf.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_TEST_ANON_KEY || "sb_publishable_1c9vpm6uQ2F8uIYDa6a_hg_KBTCSnC7";
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.warn("⚠️ Usando valores de teste para o script. Para apontar para outro projeto, configure NEXT_PUBLIC_SUPABASE_URL no ambiente.");
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
