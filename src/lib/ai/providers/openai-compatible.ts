@@ -11,6 +11,8 @@ export class OpenAICompatibleProvider implements AIProvider {
         return "https://openrouter.ai/api/v1";
       case "nvidia":
         return "https://integrate.api.nvidia.com/v1";
+      case "groq":
+        return "https://api.groq.com/openai/v1";
       case "openai":
         return "https://api.openai.com/v1";
       case "ollama":

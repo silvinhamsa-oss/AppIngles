@@ -56,7 +56,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const effectiveBaseUrl = (baseUrl?.trim() || (provider === "nvidia" ? "https://integrate.api.nvidia.com/v1" : "https://api.openai.com/v1")).replace(/\/+$/, "");
+    let defaultUrl = "https://api.openai.com/v1";
+    if (provider === "nvidia") defaultUrl = "https://integrate.api.nvidia.com/v1";
+    if (provider === "groq") defaultUrl = "https://api.groq.com/openai/v1";
+
+    const effectiveBaseUrl = (baseUrl?.trim() || defaultUrl).replace(/\/+$/, "");
 
     // 1. Buscar a lista real de modelos retornada pela conta do provedor
     let listUrl = `${effectiveBaseUrl}/models`;
@@ -74,6 +78,8 @@ export async function POST(req: NextRequest) {
       headers["X-Title"] = "English Lab AI Tutor";
     } else if (provider === "openai") {
       listUrl = "https://api.openai.com/v1/models";
+    } else if (provider === "groq") {
+      listUrl = "https://api.groq.com/openai/v1/models";
     }
 
     let fetchedRawModels: ModelItem[] = [];
@@ -111,15 +117,23 @@ export async function POST(req: NextRequest) {
 
     // Se a busca de modelos retornar vazia ou não permitida, usa lista de fallback
     if (chatCandidateModels.length === 0) {
-      const fallbackList = [
-        "meta/llama-3.1-70b-instruct",
-        "mistralai/mistral-large-2-instruct",
-        "meta/llama-3.1-8b-instruct",
-        "deepseek-ai/deepseek-r1",
-        "qwen/qwen2.5-72b-instruct",
-        "google/gemma-2-27b-it",
-        "microsoft/phi-3.5-mini-instruct",
-      ];
+      const fallbackList = provider === "groq"
+        ? [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it",
+          ]
+        : [
+            "meta/llama-3.1-70b-instruct",
+            "mistralai/mistral-large-2-instruct",
+            "meta/llama-3.1-8b-instruct",
+            "deepseek-ai/deepseek-r1",
+            "qwen/qwen2.5-72b-instruct",
+            "google/gemma-2-27b-it",
+            "microsoft/phi-3.5-mini-instruct",
+          ];
       chatCandidateModels = fallbackList.map((id) => ({ id, name: id }));
     }
 

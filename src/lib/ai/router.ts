@@ -12,12 +12,13 @@ export class AIRouter {
         return new AnthropicProvider();
       case "openrouter":
       case "nvidia":
+      case "groq":
       case "openai":
       case "ollama":
       case "custom":
         return new OpenAICompatibleProvider();
       default:
-        throw new Error(`Provedor de IA desconhecido ou não suportado: "${providerType}". Escolha entre openrouter, openai, gemini, anthropic, nvidia, ollama ou custom.`);
+        throw new Error(`Provedor de IA desconhecido ou não suportado: "${providerType}". Escolha entre openrouter, nvidia, groq, openai, gemini, anthropic, ollama ou custom.`);
     }
   }
 

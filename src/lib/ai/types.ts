@@ -1,6 +1,7 @@
 export type AIProviderType =
   | "openrouter"
   | "nvidia"
+  | "groq"
   | "openai"
   | "gemini"
   | "anthropic"

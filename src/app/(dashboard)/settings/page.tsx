@@ -40,6 +40,14 @@ const NVIDIA_RECOMMENDED_MODELS = [
   { id: "google/gemma-2-27b-it", label: "Gemma 2 27B", badge: "Google" },
 ];
 
+const GROQ_RECOMMENDED_MODELS = [
+  { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Recomendado)", badge: "Ultra Rápido • 70B" },
+  { id: "llama-3.1-70b-versatile", label: "Llama 3.1 70B", badge: "Alta Fidelidade" },
+  { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant", badge: "Instantâneo • ~800 t/s" },
+  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7B", badge: "Contexto 32k" },
+  { id: "gemma2-9b-it", label: "Gemma 2 9B", badge: "Google LPU" },
+];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "ai";
@@ -143,7 +151,10 @@ export default function SettingsPage() {
     setProvider(newProvider);
     setFetchedModels([]);
     setModelsFeedback(null);
-    if (newProvider === "nvidia") {
+    if (newProvider === "groq") {
+      setModel("llama-3.3-70b-versatile");
+      setBaseUrl("https://api.groq.com/openai/v1");
+    } else if (newProvider === "nvidia") {
       setModel("meta/llama-3.1-70b-instruct");
       setBaseUrl("https://integrate.api.nvidia.com/v1");
     } else if (newProvider === "openrouter") {
@@ -240,6 +251,8 @@ export default function SettingsPage() {
 
   const getApiKeyPlaceholder = () => {
     switch (provider) {
+      case "groq":
+        return "Cole sua chave Groq (gsk_...)";
       case "nvidia":
         return "Cole sua chave NVIDIA (nvapi-...)";
       case "openrouter":
@@ -441,7 +454,8 @@ export default function SettingsPage() {
                 onChange={(e) => handleProviderChange(e.target.value as AIProviderType)}
                 className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
               >
-                <option value="openrouter">OpenRouter (Mais de 100 modelos — Recomendado)</option>
+                <option value="groq">⚡ Groq LPU (Ultra Rápido — Llama 3.3 70B, Llama 3.1 8B)</option>
+                <option value="openrouter">OpenRouter (Mais de 100 modelos — Multi-Provedores)</option>
                 <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron, Mistral)</option>
                 <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
                 <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
@@ -468,7 +482,7 @@ export default function SettingsPage() {
                   Modelo de IA ({provider.toUpperCase()})
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
-                  {provider === "nvidia" && (
+                  {(provider === "nvidia" || provider === "groq") && (
                     <button
                       type="button"
                       onClick={handleAutoDetectOnlineModels}
@@ -532,11 +546,47 @@ export default function SettingsPage() {
               ) : (
                 <Input
                   type="text"
-                  placeholder="Ex: meta/llama-3.1-70b-instruct"
+                  placeholder="Ex: llama-3.3-70b-versatile ou meta/llama-3.1-70b-instruct"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                   helperText="Use o botão '⚡ Auto-Detectar Ativo' ou selecione um dos presets abaixo."
                 />
+              )}
+
+              {/* Recommended Presets for Groq */}
+              {provider === "groq" && (
+                <div className="pt-2 space-y-2">
+                  <span className="text-[11px] font-mono font-bold uppercase text-zinc-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Modelos Groq LPU Ultrarrápidos (Clique para Escolher):
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {GROQ_RECOMMENDED_MODELS.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setModel(item.id);
+                          setTestStatus("idle");
+                          setTestFeedback("");
+                        }}
+                        className={`p-3 rounded-2xl border text-xs font-mono transition-all flex flex-col justify-between gap-1 text-left cursor-pointer ${
+                          model === item.id
+                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold"
+                            : "bg-[#14141e] border-white/10 text-zinc-300 hover:border-white/30 hover:bg-[#181824]"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-bold">{item.label}</span>
+                          {model === item.id && <span className="text-[10px] text-amber-400">✓ Ativo</span>}
+                        </div>
+                        <span className="text-[10px] text-zinc-400">
+                          {item.badge}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Recommended Presets for NVIDIA */}

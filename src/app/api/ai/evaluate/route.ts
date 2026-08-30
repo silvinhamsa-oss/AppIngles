@@ -12,7 +12,14 @@ export async function POST(req: NextRequest) {
     const activeConfig: AIConfig = {
       provider: (clientConfig?.provider as AIProviderType) || (process.env.AI_PROVIDER as AIProviderType) || "openrouter",
       apiKey: clientConfig?.apiKey || process.env.AI_API_KEY || "",
-      model: clientConfig?.model || process.env.AI_MODEL || (clientConfig?.provider === "nvidia" ? "nvidia/llama-3.1-nemotron-70b-instruct" : "meta-llama/llama-3.3-70b-instruct"),
+      model:
+        clientConfig?.model ||
+        process.env.AI_MODEL ||
+        (clientConfig?.provider === "groq"
+          ? "llama-3.3-70b-versatile"
+          : clientConfig?.provider === "nvidia"
+          ? "meta/llama-3.1-70b-instruct"
+          : "meta-llama/llama-3.3-70b-instruct"),
       baseUrl: clientConfig?.baseUrl || process.env.AI_BASE_URL,
       temperature: 0.3,
       maxTokens: 1000,
