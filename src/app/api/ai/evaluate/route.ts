@@ -91,6 +91,12 @@ Respond ONLY with a valid, raw JSON object (without markdown code blocks, backti
       cleanJson = cleanJson.replace(/^```/, "").replace(/```$/, "").trim();
     }
 
+    const firstBrace = cleanJson.indexOf("{");
+    const lastBrace = cleanJson.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+    }
+
     const report: EvaluationReport = JSON.parse(cleanJson);
     return NextResponse.json(report);
   } catch (error: unknown) {
