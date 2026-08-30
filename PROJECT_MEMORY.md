@@ -80,7 +80,13 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
-## ✍️ 9. Laboratório de Escrita Ativa & Onboarding Inteligente
+## ✍️ 9. Escrita Ativa, Desafio Diário, Dicionário de Toque & Onboarding
+* **Modo "Desafio Diário" (`src/lib/daily-challenge.ts` & `dashboard/page.tsx`):**
+  - Desafios rotativos determinísticos calibrados para cada nível CEFR (A1 a C2).
+  - Integração com ganhos de +50 XP a +100 XP, chuva de confetti e salvamento na conta do aluno.
+* **Dicionário Contextual de Toque (`src/components/talk/WordLookupModal.tsx` & `talk/page.tsx`):**
+  - Palavras interativas nos balões de fala da IA no chat de voz.
+  - Tocar em qualquer palavra abre popover com fonética IPA, tradução em português, definição contextual e botão "+ Salvar nos Flashcards" direto no banco Supabase.
 * **Laboratório de Escrita Ativa (`WritingModal.tsx`):**
   - Prática de redações estruturadas para todos os níveis (A1 a C1) com temas cotidianos e profissionais.
   - Contador de palavras dinâmico, meta de tamanho e diretrizes pedagógicas.

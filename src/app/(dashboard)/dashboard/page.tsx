@@ -17,7 +17,18 @@ import {
   Volume2,
   Flame,
   Check,
+  Target,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
+import {
+  getDailyChallenge,
+  isDailyChallengeCompleted,
+  markDailyChallengeCompleted,
+  DailyChallenge,
+} from "@/lib/daily-challenge";
+import confetti from "canvas-confetti";
+import Link from "next/link";
 
 interface DBVocabItem {
   id: string;
@@ -51,6 +62,41 @@ export default function DashboardPage() {
     reading: 85,
     writing: 74,
   });
+
+  const [challenge, setChallenge] = useState<DailyChallenge>(() => getDailyChallenge("B1+"));
+  const [isChallengeDone, setIsChallengeDone] = useState(false);
+
+  useEffect(() => {
+    const cur = getDailyChallenge(level);
+    setChallenge(cur);
+    setIsChallengeDone(isDailyChallengeCompleted(cur.id));
+  }, [level]);
+
+  const handleCompleteChallenge = async () => {
+    if (isChallengeDone) return;
+    markDailyChallengeCompleted(challenge.id);
+    setIsChallengeDone(true);
+    setUserXp((prev) => prev + challenge.xpReward);
+
+    confetti({
+      particleCount: 70,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: ["#f59e0b", "#10b981", "#ffffff"],
+    });
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          xp_points: userXp + challenge.xpReward,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch {}
+  };
 
 
   useEffect(() => {
@@ -147,6 +193,87 @@ export default function DashboardPage() {
           </h3>
         </div>
         <QuickActions />
+      </div>
+
+      {/* Daily Challenge Card (Desafio do Dia) */}
+      <div className="p-5 sm:p-7 rounded-3xl bg-[#0d0d14] border border-amber-500/40 shadow-2xl shadow-amber-500/10 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/20 shrink-0">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  🏆 DESAFIO DO DIA • {challenge.level}
+                </span>
+                {isChallengeDone ? (
+                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Concluído</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                    +{challenge.xpReward} XP Bônus
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white tracking-tight mt-1">
+                {challenge.title}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!isChallengeDone ? (
+              <button
+                onClick={handleCompleteChallenge}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer active:scale-95"
+              >
+                <Sparkles className="w-4 h-4 fill-zinc-950" />
+                <span>Marcar Concluído (+{challenge.xpReward} XP)</span>
+              </button>
+            ) : (
+              <div className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 py-2 px-3 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+                <Check className="w-4 h-4" />
+                <span>Desafio diário resgatado!</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+          {challenge.description}
+        </p>
+
+        <div className="p-3 rounded-2xl bg-[#14141e] border border-white/10 flex items-center justify-between gap-2 text-xs">
+          <div className="text-zinc-400">
+            <strong className="text-white font-mono font-medium">Missão:</strong> {challenge.taskPrompt}
+          </div>
+          {challenge.type === "speaking" && (
+            <Link href="/talk" className="text-amber-400 hover:text-amber-300 font-bold font-mono text-[11px] shrink-0">
+              Ir para o Chat →
+            </Link>
+          )}
+          {challenge.type === "writing" && (
+            <Link href="/learn" className="text-amber-400 hover:text-amber-300 font-bold font-mono text-[11px] shrink-0">
+              Abrir Writing Lab →
+            </Link>
+          )}
+          {challenge.type === "listening" && (
+            <Link href="/progress?tab=listening" className="text-amber-400 hover:text-amber-300 font-bold font-mono text-[11px] shrink-0">
+              Ouvir Ditado →
+            </Link>
+          )}
+          {challenge.type === "vocabulary" && (
+            <button
+              onClick={() => setIsSRSModalOpen(true)}
+              className="text-amber-400 hover:text-amber-300 font-bold font-mono text-[11px] shrink-0 cursor-pointer"
+            >
+              Revisar Cards →
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Adaptive Mission Card */}

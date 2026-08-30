@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk/TopicSelector";
 import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
+import { WordLookupModal } from "@/components/talk/WordLookupModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { createClient } from "@/lib/supabase/client";
 import confetti from "canvas-confetti";
@@ -39,6 +40,10 @@ export default function TalkPage() {
   const [persona, setPersona] = useState<"sarah" | "marcus">("sarah");
   const [hintMessage, setHintMessage] = useState<string | null>(null);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+
+  // Contextual Touch Dictionary State
+  const [lookupWord, setLookupWord] = useState<string | null>(null);
+  const [lookupContext, setLookupContext] = useState<string | undefined>(undefined);
 
   // Timer state
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -414,6 +419,14 @@ export default function TalkPage() {
     }
   };
 
+  const handleWordClick = (word: string, fullSentence: string) => {
+    const clean = word.replace(/[.,!?;:"'()]/g, "").trim();
+    if (clean.length > 1) {
+      setLookupWord(clean);
+      setLookupContext(fullSentence);
+    }
+  };
+
   return (
     <div className="h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto">
       {/* Studio Audio Header */}
@@ -547,7 +560,24 @@ export default function TalkPage() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-2.5">
-                  {msg.content ? (
+                  {msg.sender === "ai" && msg.content ? (
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {msg.content.split(/(\s+)/).map((segment, idx) => {
+                        const isWord = /[a-zA-Z]/.test(segment);
+                        if (!isWord) return segment;
+                        return (
+                          <span
+                            key={idx}
+                            onClick={() => handleWordClick(segment, msg.content)}
+                            className="hover:text-amber-300 hover:underline cursor-pointer transition-colors rounded px-0.5"
+                            title="Toque para ver tradução e salvar"
+                          >
+                            {segment}
+                          </span>
+                        );
+                      })}
+                    </p>
+                  ) : msg.content ? (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   ) : isGenerating && msg.id === messages[messages.length - 1].id ? (
                     <div className="flex items-center gap-2 text-amber-300/90 font-mono text-xs py-1">
@@ -669,6 +699,14 @@ export default function TalkPage() {
         onClose={() => setIsReportModalOpen(false)}
         report={evaluationReport}
         durationMinutes={Math.max(1, Math.round(secondsElapsed / 60))}
+      />
+
+      {/* Contextual Touch Dictionary Modal */}
+      <WordLookupModal
+        isOpen={!!lookupWord}
+        onClose={() => setLookupWord(null)}
+        targetWord={lookupWord || ""}
+        contextSentence={lookupContext}
       />
     </div>
   );

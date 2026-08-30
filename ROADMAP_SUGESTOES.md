@@ -10,11 +10,13 @@
 | Módulo | Status | Arquivos-chave |
 |--------|--------|----------------|
 | **Conversação por Voz (/talk)** | ✅ Completo | `src/app/(dashboard)/talk/page.tsx`, `src/lib/audio.ts` |
+| **Dicionário de Toque no Chat** | ✅ **IMPLEMENTADO** | `src/components/talk/WordLookupModal.tsx`, `talk/page.tsx` |
+| **Desafio Diário (Daily Challenge)** | ✅ **IMPLEMENTADO** | `src/lib/daily-challenge.ts`, `dashboard/page.tsx` |
+| **Escrita Ativa (Writing Lab)** | ✅ **IMPLEMENTADO** | `src/components/learn/WritingModal.tsx`, `learn/page.tsx`, `progress/page.tsx` |
+| **Onboarding Inteligente com Nivelamento** | ✅ **IMPLEMENTADO** | `src/app/(auth)/signup/page.tsx`, `src/app/(dashboard)/test/page.tsx` |
 | **Vocabulário SRS (SM-2)** | ✅ Completo | `src/lib/srs.ts`, `src/app/(dashboard)/vocabulary/page.tsx` |
 | **Teste de Nivelamento CEFR** | ✅ Completo | `src/app/(dashboard)/test/page.tsx` |
 | **Trilha de Aulas A1-C2 + Simulados** | ✅ Completo | `src/app/(dashboard)/learn/page.tsx`, `src/lib/curriculum-data.ts` |
-| **Escrita Ativa (Writing Lab)** | ✅ **IMPLEMENTADO** | `src/components/learn/WritingModal.tsx`, `learn/page.tsx`, `progress/page.tsx` |
-| **Onboarding Inteligente com Nivelamento** | ✅ **IMPLEMENTADO** | `src/app/(auth)/signup/page.tsx`, `src/app/(dashboard)/test/page.tsx` |
 | **Progresso + Radar + Listening Lab** | ✅ Completo | `src/app/(dashboard)/progress/page.tsx` |
 | **Configurações IA Multi-Provider** | ✅ Completo | `src/app/(dashboard)/settings/page.tsx`, `src/lib/ai/router.ts` |
 | **Seleção de Voz Nativa (Sarah/Marcus)** | ✅ Completo | `src/lib/audio.ts`, `src/app/(dashboard)/settings/page.tsx` |
@@ -118,27 +120,15 @@ Settings → nova aba "Dados":
 
 ---
 
-## 5. Modo "Desafio Diário" (Daily Challenge)
-**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo**
+## 5. Modo "Desafio Diário" (Daily Challenge) — ✅ CONCLUÍDO
+**Impacto**: 🟡 **Médio** | **Esforço**: 🟢 **Baixo** | **Status**: ✅ **Implementado**
 
-**Por que**: Gamificação leve aumenta retenção. Já tem streak, XP, missions — isso é a "cereja do bolo".
+**Por que**: Gamificação leve e diária que aumenta o engajamento e a manutenção da ofensiva (`streak`).
 
-**Como**:
-```
-- 1 desafio único/dia por nível CEFR (rotaciona: writing, speaking, vocab, listening)
-- Ex: "Use 'come up with' em 3 frases diferentes" (B2)
-- Completar = +50 XP bonus + badge "Desafiador do Dia"
-- Push notification (PWA + service worker já configurado)
-- Compartilhamento: canvas confetti → gerar image → share API
-```
-
-**Arquivos**: `src/lib/daily-challenge.ts` (novo, gera desafio baseado em nível + data), `src/app/(dashboard)/dashboard/page.tsx` (card no topo), `public/sw.js` (push notification).
-
-**Dependências**: PWA + SW funcionando; `cefr_level` no perfil.
-
-**Risco**: Notificação pode ser chata → opt-in obrigatório.
-
-**Métrica**: % usuários completam desafio/dia; impacto no streak médio.
+**O que foi entregue**:
+- Gerador determinístico de desafio diário por nível CEFR (`src/lib/daily-challenge.ts`).
+- Card de destaque na tela principal (`/dashboard`) com detalhes da missão, recompensa em XP e atalho direto para o módulo correspondente.
+- Botão de resgate interativo com persistência no Supabase, XP bônus e chuva de confetti.
 
 ---
 
