@@ -36,7 +36,8 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ### Recursos de IA e Gestão de Modelos:
 * **Auto-Detecção de Modelos Ativos:** Endpoint `POST /api/ai/models` com `action: "auto-detect"` que realiza pings de latência paralelos e seleciona o melhor modelo liberado na conta do usuário.
-* **Fallback em Cascata Server-side:** Se um modelo específico da NVIDIA/Groq responder `404` ou `410`, o servidor automaticamente tenta os modelos de backup estáveis para nunca travar a conversa no chat.
+* **Fallback em Cascata Server-side (404, 410 e 429 Rate Limit):** Se um modelo da NVIDIA/Groq responder erro `404/410` (indisponível) ou `429` (limite de taxa do free tier atingido), o servidor salta automaticamente para o próximo modelo estável da lista em tempo real.
+* **Extrator Resiliente de JSON (`/api/ai/evaluate`):** Recorta blocos `{ ... }` garantindo 100% de sucesso no parsing do relatório de avaliação CEFR pós-conversa, mesmo com preâmbulos de texto.
 * **Persistência de API Keys no Supabase:** Credenciais e configurações salvas na tabela `public.profiles` (`ai_provider`, `ai_api_key`, `ai_model`, `ai_base_url`, `ai_temperature`, `ai_max_tokens`) e sincronizadas no `localStorage`.
 
 ---
@@ -46,6 +47,7 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 * **Interrupção Imediata:** Alternar para mudo interrompe o sintetizador de voz (`speechSynthesis.cancel()`) no mesmo milissegundo.
 * **Status 100% em Inglês:** Indicadores de carregamento exibem `Sarah is thinking...` ou `Marcus is thinking...` com animação de pontos pulsantes (`animate-pulse`).
 * **Reconhecimento de Voz (STT):** Suporte nativo a Web Speech API para gravação contínua e transcrição em tempo real.
+* **Mensagens de Diagnóstico Inteligentes:** Identificação clara de erros HTTP (401 chave inválida, 402 créditos, 429 limite de taxa, 5xx instabilidade).
 
 ---
 
@@ -57,17 +59,27 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
+## 🎨 6. Sistema de Temas (Claro / Escuro) & Anti-Flash
+* **Persistência de Tema (`ThemeToggle.tsx`):** Armazena preferência no `localStorage` com alternância suave e ícone interativo (Sol ☀️ / Lua 🌙).
+* **Script Anti-Flash (`layout.tsx`):** Injeta script síncrono no `<head>` para carregar o tema antes do render, eliminando qualquer flash de tela ao recarregar.
+* **Modo Claro Profissional (`globals.css`):** Adaptação completa de headers, sidebars, bottom nav, studio cards, inputs e tipografia.
+
 ---
 
 ## 📱 7. Experiência Mobile & Responsividade (UI/UX)
-* **Barra de Navegação Inferior (`BottomNav.tsx`):** Inclui 6 abas essenciais (*Início, Aprender, Conversar [Destaque Flutuante Central], Vocab, Progresso e Ajustes*), com suporte a safe area (`pb-safe`), micro-animações de toque (`active:scale-95`) e indicador ativo sob o ícone.
-* **Modal de Tópicos e Projetos (`TopicSelector.tsx`):** Grid responsivo em coluna única/dupla com limitação de altura (`max-h-[85dvh]`) e rolagem vertical suave (`overflow-y-auto`), evitando qualquer estouro de cards em celulares.
-* **View Height Dinâmico (`100dvh`):** O chat de conversação com áudio (`/talk`) utiliza `h-[calc(100dvh-8rem)]` para não ser comprimido ou cortado pelas barras de endereços móveis (Safari iOS e Chrome Android).
+* **Barra de Navegação Inferior Simétrica (`BottomNav.tsx`):** Exatamente 5 itens perfeitamente distribuídos (*Início, Aprender, 🎙️ Conversar [Destaque Central Flutuante com Glow], Vocabulário, Progresso*), com tamanho de toque confortável e suporte a safe area (`pb-safe`).
+* **Cabeçalho Mobile Otimizado (`Header.tsx`):**
+  - Distintivo de estúdio compacto `EL`.
+  - Distintivo de nível `🎓 B1+` transformado em **atalho de 1 toque** para o **Teste de Nível (3 min)** (`/test`).
+  - Botão de engrenagem ⚙️ (`Settings`) dedicado para acesso rápido a Provedores de IA, Perfil e Voz sem poluir o menu inferior.
+  - Eliminação de encavalamento de textos entre nível e ofensiva em telas pequenas.
+* **Modal de Tópicos e Projetos (`TopicSelector.tsx`):** Grid responsivo com limitação de altura (`max-h-[85dvh]`) e rolagem vertical suave (`overflow-y-auto`), evitando qualquer estouro de cards em celulares.
+* **View Height Dinâmico (`100dvh`):** O chat de conversação com áudio (`/talk`) utiliza `h-[calc(100dvh-8rem)]` para não ser comprimido pelas barras de endereços móveis (Safari iOS e Chrome Android).
 
 ---
 
 ## 🧹 8. Qualidade de Código & Verificação
 * **ESLint:** 0 erros e 0 avisos.
-* **TypeScript:** Verificação estrita.
+* **TypeScript:** Verificação estrita com `tsc --noEmit` (0 erros).
 * **Build Next.js (Turbopack):** 18 rotas compiladas com sucesso (100% de cobertura).
 
