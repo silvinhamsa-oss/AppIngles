@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   Clock,
@@ -54,7 +55,15 @@ export default function LearnPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/test"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121218] hover:bg-white/10 border border-white/10 text-amber-300 text-xs font-bold font-mono transition-all"
+          >
+            <GraduationCap className="w-4 h-4 text-amber-400" />
+            <span>Fazer Teste de Nível (3 min)</span>
+          </Link>
+
           <Button
             variant="gold"
             onClick={() => setIsExamModalOpen(true)}

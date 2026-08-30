@@ -79,11 +79,15 @@ export function Header({
           </div>
         </Link>
 
-        {/* Level Indicator Pill */}
-        <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#121218] border border-white/10 text-amber-300 text-xs font-mono font-bold shrink-0">
+        {/* Level Indicator Pill - Clickable to open Level Placement Test */}
+        <Link
+          href="/test"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#121218] hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-mono font-bold shrink-0 transition-all cursor-pointer shadow-sm active:scale-95"
+          title="Fazer / Refazer Teste de Nível (3 min)"
+        >
           <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
           <span>{currentLevel}</span>
-        </div>
+        </Link>
       </div>
 
       {/* Stats & Controls */}
