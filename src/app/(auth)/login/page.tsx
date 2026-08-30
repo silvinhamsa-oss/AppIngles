@@ -44,8 +44,13 @@ export default function LoginPage() {
         throw error;
       }
 
-      setFeedback({ type: "success", message: "Login realizado com sucesso! Redirecionando..." });
-      router.push("/dashboard");
+      setFeedback({ type: "success", message: "Login realizado com sucesso! Entrando no painel..." });
+      
+      const searchParams = new URLSearchParams(window.location.search);
+      const nextUrl = searchParams.get("next") || "/dashboard";
+      
+      router.push(nextUrl);
+      router.refresh();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "";
       let friendlyMessage = errorMessage || "Erro ao fazer login. Verifique seu e-mail e senha.";
@@ -58,7 +63,6 @@ export default function LoginPage() {
         type: "error",
         message: friendlyMessage,
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -80,7 +84,10 @@ export default function LoginPage() {
             type: "success",
             message: "Identidade biométrica confirmada! Entrando...",
           });
-          setTimeout(() => router.push("/dashboard"), 800);
+          const searchParams = new URLSearchParams(window.location.search);
+          const nextUrl = searchParams.get("next") || "/dashboard";
+          router.push(nextUrl);
+          router.refresh();
         } else {
           setEmail(res.userEmail);
           setFeedback({
@@ -88,15 +95,16 @@ export default function LoginPage() {
             message:
               "Biometria validada. Por favor, insira sua senha para revalidar a sessão com segurança.",
           });
+          setIsBiometricLoading(false);
         }
       } else {
         setFeedback({ type: "error", message: res.message });
+        setIsBiometricLoading(false);
       }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Falha na leitura biométrica.";
       setFeedback({ type: "error", message });
-    } finally {
       setIsBiometricLoading(false);
     }
   };

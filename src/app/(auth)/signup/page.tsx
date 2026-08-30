@@ -60,9 +60,8 @@ export default function SignupPage() {
           type: "success",
           message: "Conta criada com sucesso! Redirecionando para o seu painel...",
         });
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1200);
+        router.push("/dashboard");
+        router.refresh();
       } else if (data.user) {
         // Se o Supabase exige confirmação de email
         setFeedback({
