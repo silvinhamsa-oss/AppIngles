@@ -20,7 +20,12 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function ProgressPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "overview";
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    return tabParam && ["overview", "listening", "history"].includes(tabParam) ? tabParam : "overview";
+  });
   const [userLevel, setUserLevel] = useState<CEFRLevel>("B1+");
   const [totalXp, setTotalXp] = useState(1240);
 
@@ -32,7 +37,6 @@ export default function ProgressPage() {
     reading: 86,
     writing: 75,
   });
-
 
   useEffect(() => {
     async function loadProgressData() {

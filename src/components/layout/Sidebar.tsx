@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -12,8 +12,10 @@ import {
   Settings,
   Sparkles,
   GraduationCap,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { label: "Painel", href: "/dashboard", icon: LayoutDashboard },
@@ -26,6 +28,19 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    } catch {
+      router.push("/login");
+      router.refresh();
+    }
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-[#07070a] border-r border-white/10 p-5 select-none sticky top-0 h-screen">
@@ -106,8 +121,8 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Settings Footer */}
-      <div className="pt-3 border-t border-white/10">
+      {/* Settings & Logout Footer */}
+      <div className="pt-3 border-t border-white/10 space-y-1">
         <Link
           href="/settings"
           className={cn(
@@ -120,6 +135,14 @@ export function Sidebar() {
           <Settings className="w-4 h-4 text-white/40" />
           <span>Configurações</span>
         </Link>
+
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer"
+        >
+          <LogOut className="w-4 h-4 text-red-400/60" />
+          <span>Sair da Conta</span>
+        </button>
       </div>
     </aside>
   );

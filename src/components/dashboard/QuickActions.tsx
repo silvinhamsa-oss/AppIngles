@@ -43,7 +43,7 @@ export function QuickActions() {
     {
       title: "Compreensão Auditiva",
       subtitle: "Exercícios de escuta real, ditado e resumo",
-      href: "/learn",
+      href: "/progress?tab=listening",
       icon: Headphones,
       haloClass: "card-halo-amber",
       iconBg: "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg shadow-amber-500/20",

@@ -139,6 +139,16 @@ export default function DashboardPage() {
         dailyGoalMinutes={20}
       />
 
+      {/* Quick Action Cards - 4 Key Pillars */}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 font-mono">
+            Módulos de Treinamento Rápido
+          </h3>
+        </div>
+        <QuickActions />
+      </div>
+
       {/* Main Adaptive Mission Card */}
       <MissionCard targetLevel={level} />
 
@@ -271,7 +281,6 @@ export default function DashboardPage() {
         {/* Right 1 Column: English Radar & Quick Actions */}
         <div className="space-y-6">
           <EnglishRadar data={radarData} currentLevel={level} />
-          <QuickActions />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -14,6 +14,8 @@ import {
   Save,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
+import { CEFRLevel } from "@/types/profile";
+import { createClient } from "@/lib/supabase/client";
 
 function getSavedAIConfig() {
   if (typeof window === "undefined") return null;
@@ -26,7 +28,12 @@ function getSavedAIConfig() {
 }
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("ai");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "ai";
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    return tabParam && ["ai", "profile", "voice"].includes(tabParam) ? tabParam : "ai";
+  });
 
   // AI Configuration State with lazy initializers
   const [provider, setProvider] = useState<AIProviderType>(() => getSavedAIConfig()?.provider || "openrouter");
@@ -39,6 +46,53 @@ export default function SettingsPage() {
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testFeedback, setTestFeedback] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Profile States
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [cefrLevel, setCefrLevel] = useState<CEFRLevel>("B1+");
+  const [dailyGoalMinutes, setDailyGoalMinutes] = useState(20);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileFeedback, setProfileFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Voice States
+  const [sttProvider, setSttProvider] = useState("web-speech");
+  const [ttsVoice, setTtsVoice] = useState("browser-samantha");
+  const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    async function loadUserProfile() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          setEmail(user.email || "");
+          setFullName(user.user_metadata?.full_name || "");
+          if (user.user_metadata?.cefr_level) {
+            setCefrLevel(user.user_metadata.cefr_level as CEFRLevel);
+          }
+
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          if (profile) {
+            if (profile.full_name) setFullName(profile.full_name);
+            if (profile.email) setEmail(profile.email);
+            if (profile.cefr_level) setCefrLevel(profile.cefr_level as CEFRLevel);
+            if (profile.daily_goal_minutes) setDailyGoalMinutes(profile.daily_goal_minutes);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading user profile in settings:", err);
+      }
+    }
+
+    loadUserProfile();
+  }, []);
 
   const handleTestConnection = async () => {
     setTestStatus("testing");
@@ -71,8 +125,7 @@ export default function SettingsPage() {
     }
   };
 
-
-  const handleSave = (e: React.FormEvent) => {
+  const handleSaveAIConfig = (e: React.FormEvent) => {
     e.preventDefault();
     const config = {
       provider,
@@ -87,6 +140,73 @@ export default function SettingsPage() {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    setProfileFeedback(null);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Usuário não autenticado.");
+      }
+
+      // 1. Update profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          email: email || user.email,
+          full_name: fullName,
+          cefr_level: cefrLevel,
+          daily_goal_minutes: dailyGoalMinutes,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (profileError) {
+        console.warn("Could not upsert profile table, updating auth metadata:", profileError);
+      }
+
+      // 2. Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          full_name: fullName,
+          cefr_level: cefrLevel,
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      setProfileFeedback({
+        type: "success",
+        message: "Perfil atualizado com sucesso! Suas alterações já estão ativas.",
+      });
+      setTimeout(() => setProfileFeedback(null), 4000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao atualizar perfil.";
+      setProfileFeedback({
+        type: "error",
+        message,
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleSaveVoiceConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem(
+      "english-lab-voice-config",
+      JSON.stringify({ sttProvider, ttsVoice })
+    );
+    setVoiceSaveSuccess(true);
+    setTimeout(() => setVoiceSaveSuccess(false), 3000);
+  };
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
@@ -95,7 +215,7 @@ export default function SettingsPage() {
           Configurações da Plataforma
         </h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
-          Configure seus provedores de IA, parâmetros pedagógicos e síntese de voz com segurança total.
+          Configure seus provedores de IA, parâmetros pedagógicos e preferências de voz.
         </p>
       </div>
 
@@ -109,21 +229,19 @@ export default function SettingsPage() {
         onChange={setActiveTab}
       />
 
+      {/* TAB 1: AI ROUTER CONFIG */}
       {activeTab === "ai" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
             <div>
               <h2 className="text-lg font-bold text-white">Camada de IA Desacoplada (AI Router)</h2>
               <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
-                Conecte seu provedor de preferência com segurança. As chaves nunca são expostas publicamente.
+                Conecte seu provedor de preferência com segurança. As chaves são armazenadas localmente no seu dispositivo.
               </p>
             </div>
-            <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
-              Desacoplado
-            </span>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-5">
+          <form onSubmit={handleSaveAIConfig} className="space-y-5">
             {/* Provider Selector */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
@@ -131,22 +249,10 @@ export default function SettingsPage() {
               </label>
               <select
                 value={provider}
-                onChange={(e) => {
-                  const val = e.target.value as AIProviderType;
-                  setProvider(val);
-                  if (val === "openrouter") setModel("meta-llama/llama-3.3-70b-instruct");
-                  else if (val === "nvidia") setModel("meta/llama-3.3-70b-instruct");
-                  else if (val === "openai") setModel("gpt-4o-mini");
-                  else if (val === "gemini") setModel("gemini-2.0-flash");
-                  else if (val === "anthropic") setModel("claude-3-5-sonnet-20241022");
-                  else if (val === "ollama") {
-                    setModel("llama3.2");
-                    setBaseUrl("http://localhost:11434/v1");
-                  }
-                }}
-                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                onChange={(e) => setProvider(e.target.value as AIProviderType)}
+                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
               >
-                <option value="openrouter">OpenRouter (Centenas de Modelos • Llama 3.3, Mistral, DeepSeek)</option>
+                <option value="openrouter">OpenRouter (Mais de 100 modelos — Recomendado)</option>
                 <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron)</option>
                 <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
                 <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
@@ -237,7 +343,7 @@ export default function SettingsPage() {
             {saveSuccess && (
               <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2.5 shadow-lg">
                 <CheckCircle2 className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>Configurações salvas com sucesso no seu perfil!</span>
+                <span>Configurações de IA salvas com sucesso!</span>
               </div>
             )}
 
@@ -255,90 +361,159 @@ export default function SettingsPage() {
 
               <Button type="submit" variant="gold" className="w-full sm:w-auto">
                 <Save className="w-4 h-4 mr-1.5" />
-                <span>Salvar Configurações</span>
+                <span>Salvar Configurações de IA</span>
               </Button>
             </div>
           </form>
         </div>
       )}
 
+      {/* TAB 2: PROFILE AND CEFR GOALS */}
       {activeTab === "profile" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
           <div>
             <h2 className="text-lg font-bold text-white">Perfil e Metas de Estudo</h2>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Personalize seu nível CEFR e objetivos de conversação.
+              Personalize seu nome, nível CEFR atual e meta diária de estudo.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Nome do Aluno" defaultValue="Welld" />
-            <Input label="E-mail" defaultValue="welld@example.com" />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
-              Nível Atual no CEFR
-            </label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {["A1", "A2", "B1", "B1+", "B2", "C1"].map((lvl) => (
-                <button
-                  key={lvl}
-                  type="button"
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    lvl === "B1+"
-                      ? "bg-amber-500 border-amber-400 text-zinc-950 shadow-md shadow-amber-500/20"
-                      : "bg-[#14141e] border-white/10 text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  {lvl}
-                </button>
-              ))}
+          <form onSubmit={handleSaveProfile} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Nome do Aluno"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Seu nome"
+                required
+              />
+              <Input
+                label="E-mail"
+                value={email}
+                disabled
+                placeholder="seu@email.com"
+                helperText="O e-mail é vinculado à sua conta Supabase."
+              />
             </div>
-          </div>
 
-          <Button variant="gold">
-            <span>Atualizar Perfil</span>
-          </Button>
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                Nível Atual no CEFR
+              </label>
+              <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                {(["A1", "A2", "B1", "B1+", "B2", "C1", "C2"] as CEFRLevel[]).map((lvl) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setCefrLevel(lvl)}
+                    className={`py-2.5 px-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                      cefrLevel === lvl
+                        ? "bg-amber-500 border-amber-400 text-zinc-950 shadow-md shadow-amber-500/20"
+                        : "bg-[#14141e] border-white/10 text-zinc-400 hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-zinc-300">Meta Diária de Prática</span>
+                <span className="text-amber-400 font-mono font-bold">{dailyGoalMinutes} minutos / dia</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="60"
+                step="5"
+                value={dailyGoalMinutes}
+                onChange={(e) => setDailyGoalMinutes(parseInt(e.target.value))}
+                className="w-full accent-amber-500 cursor-pointer"
+              />
+            </div>
+
+            {profileFeedback && (
+              <div
+                className={`p-4 rounded-2xl border text-xs flex items-center gap-2.5 shadow-lg ${
+                  profileFeedback.type === "success"
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                    : "bg-red-500/15 border-red-500/40 text-red-300"
+                }`}
+              >
+                {profileFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+                )}
+                <span>{profileFeedback.message}</span>
+              </div>
+            )}
+
+            <Button type="submit" variant="gold" isLoading={isSavingProfile}>
+              <Save className="w-4 h-4 mr-1.5" />
+              <span>Salvar Alterações do Perfil</span>
+            </Button>
+          </form>
         </div>
       )}
 
+      {/* TAB 3: VOICE CONFIG */}
       {activeTab === "voice" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
           <div>
             <h2 className="text-lg font-bold text-white">Configurações de Fala & Áudio</h2>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Provedores desacoplados para Reconhecimento (STT) e Síntese de Voz (TTS).
+              Preferências de reconhecimento de fala (STT) e síntese de voz (TTS).
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
-                Reconhecimento de Fala (Speech-to-Text)
-              </label>
-              <select className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white">
-                <option>Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
-                <option>OpenAI Whisper API</option>
-                <option>Groq Whisper (Ultra Baixa Latência)</option>
-              </select>
+          <form onSubmit={handleSaveVoiceConfig} className="space-y-5">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                  Reconhecimento de Fala (Speech-to-Text)
+                </label>
+                <select
+                  value={sttProvider}
+                  onChange={(e) => setSttProvider(e.target.value)}
+                  className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
+                >
+                  <option value="web-speech">Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
+                  <option value="whisper">OpenAI Whisper API</option>
+                  <option value="groq">Groq Whisper (Ultra Baixa Latência)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                  Síntese de Voz (Text-to-Speech)
+                </label>
+                <select
+                  value={ttsVoice}
+                  onChange={(e) => setTtsVoice(e.target.value)}
+                  className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
+                >
+                  <option value="browser-samantha">Voz Nativa do Navegador (Samantha / Daniel UK / Google US)</option>
+                  <option value="elevenlabs">ElevenLabs AI Voice (Ultra Realista)</option>
+                  <option value="openai-alloy">OpenAI TTS (Alloy / Nova / Echo)</option>
+                </select>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
-                Síntese de Voz (Text-to-Speech)
-              </label>
-              <select className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white">
-                <option>Voz Nativa do Navegador (Samantha / Daniel UK / Google US)</option>
-                <option>ElevenLabs AI Voice (Ultra Realista)</option>
-                <option>OpenAI TTS (Alloy / Nova / Echo)</option>
-              </select>
-            </div>
-          </div>
+            {voiceSaveSuccess && (
+              <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2.5 shadow-lg">
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-amber-400" />
+                <span>Preferências de áudio salvas com sucesso!</span>
+              </div>
+            )}
 
-          <Button variant="gold">
-            <span>Salvar Preferências de Áudio</span>
-          </Button>
+            <Button type="submit" variant="gold">
+              <Save className="w-4 h-4 mr-1.5" />
+              <span>Salvar Preferências de Áudio</span>
+            </Button>
+          </form>
         </div>
       )}
     </div>
