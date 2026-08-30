@@ -16,6 +16,8 @@ import {
   Sparkles,
   ListFilter,
   Zap,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
 import { CEFRLevel } from "@/types/profile";
@@ -146,6 +148,22 @@ export default function SettingsPage() {
 
     loadUserProfileAndAIConfig();
   }, []);
+
+  const handleSelectModel = (selectedModelId: string) => {
+    setModel(selectedModelId);
+    setTestStatus("idle");
+    setTestFeedback("");
+    setModelsFeedback(null);
+    // Garante que o modelo selecionado exista na lista fetchedModels para que o <select> reflita a seleção
+    setFetchedModels((prev) => {
+      if (prev.length === 0) return prev;
+      const exists = prev.some((m) => m.id === selectedModelId);
+      if (!exists) {
+        return [{ id: selectedModelId, name: selectedModelId }, ...prev];
+      }
+      return prev;
+    });
+  };
 
   const handleProviderChange = (newProvider: AIProviderType) => {
     setProvider(newProvider);
@@ -449,20 +467,23 @@ export default function SettingsPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Provedor de IA
               </label>
-              <select
-                value={provider}
-                onChange={(e) => handleProviderChange(e.target.value as AIProviderType)}
-                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
-              >
-                <option value="groq">⚡ Groq LPU (Ultra Rápido — Llama 3.3 70B, Llama 3.1 8B)</option>
-                <option value="openrouter">OpenRouter (Mais de 100 modelos — Multi-Provedores)</option>
-                <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron, Mistral)</option>
-                <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
-                <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
-                <option value="anthropic">Anthropic (Claude 3.5 Sonnet / Haiku)</option>
-                <option value="ollama">Ollama (Servidor Local no PC)</option>
-                <option value="custom">Provedor Customizado (Compatível com OpenAI)</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={provider}
+                  onChange={(e) => handleProviderChange(e.target.value as AIProviderType)}
+                  className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
+                >
+                  <option value="groq">⚡ Groq LPU (Ultra Rápido — Llama 3.3 70B, Llama 3.1 8B)</option>
+                  <option value="openrouter">OpenRouter (Mais de 100 modelos — Multi-Provedores)</option>
+                  <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron, Mistral)</option>
+                  <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
+                  <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
+                  <option value="anthropic">Anthropic (Claude 3.5 Sonnet / Haiku)</option>
+                  <option value="ollama">Ollama (Servidor Local no PC)</option>
+                  <option value="custom">Provedor Customizado (Compatível com OpenAI)</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+              </div>
             </div>
 
             {/* API Key */}
@@ -528,28 +549,36 @@ export default function SettingsPage() {
               {/* Dynamic Select if fetched from API */}
               {fetchedModels.length > 0 && !isCustomModelInput ? (
                 <div className="space-y-1.5">
-                  <select
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    className="w-full rounded-2xl bg-[#14141e] border border-amber-500/40 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400 font-mono shadow-lg shadow-amber-500/5"
-                  >
-                    {fetchedModels.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.id} {m.latencyMs ? `(${m.latencyMs}ms - Online)` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-emerald-400 font-mono">
-                    ✓ {fetchedModels.length} modelos sincronizados diretamente da sua conta do provedor.
-                  </p>
+                  <div className="relative">
+                    <select
+                      value={model}
+                      onChange={(e) => handleSelectModel(e.target.value)}
+                      className="w-full appearance-none rounded-2xl bg-[#14141e] border border-amber-500/40 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 font-mono shadow-lg shadow-amber-500/5 cursor-pointer"
+                    >
+                      {fetchedModels.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.id} {m.latencyMs ? `(${m.latencyMs}ms - Online)` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400 pointer-events-none" />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-mono px-1">
+                    <span className="text-emerald-400">
+                      ✓ {fetchedModels.length} modelos sincronizados da sua conta.
+                    </span>
+                    <span className="text-zinc-400">
+                      Ativo: <strong className="text-amber-300">{model}</strong>
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <Input
                   type="text"
                   placeholder="Ex: llama-3.3-70b-versatile ou meta/llama-3.1-70b-instruct"
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  helperText="Use o botão '⚡ Auto-Detectar Ativo' ou selecione um dos presets abaixo."
+                  onChange={(e) => handleSelectModel(e.target.value)}
+                  helperText="Use o botão '⚡ Auto-Detectar Ativo', escolha na lista ou selecione um preset abaixo."
                 />
               )}
 
@@ -558,27 +587,28 @@ export default function SettingsPage() {
                 <div className="pt-2 space-y-2">
                   <span className="text-[11px] font-mono font-bold uppercase text-zinc-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Modelos Groq LPU Ultrarrápidos (Clique para Escolher):
+                    Modelos Groq LPU Ultrarrápidos (Clique para Selecionar):
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {GROQ_RECOMMENDED_MODELS.map((item) => (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => {
-                          setModel(item.id);
-                          setTestStatus("idle");
-                          setTestFeedback("");
-                        }}
+                        onClick={() => handleSelectModel(item.id)}
                         className={`p-3 rounded-2xl border text-xs font-mono transition-all flex flex-col justify-between gap-1 text-left cursor-pointer ${
                           model === item.id
-                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold"
+                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold ring-1 ring-amber-400/50"
                             : "bg-[#14141e] border-white/10 text-zinc-300 hover:border-white/30 hover:bg-[#181824]"
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="font-bold">{item.label}</span>
-                          {model === item.id && <span className="text-[10px] text-amber-400">✓ Ativo</span>}
+                          <span className="font-bold truncate">{item.label}</span>
+                          {model === item.id ? (
+                            <span className="text-[10px] text-amber-400 flex items-center gap-1 font-bold">
+                              <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              Ativo
+                            </span>
+                          ) : null}
                         </div>
                         <span className="text-[10px] text-zinc-400">
                           {item.badge}
@@ -594,27 +624,28 @@ export default function SettingsPage() {
                 <div className="pt-2 space-y-2">
                   <span className="text-[11px] font-mono font-bold uppercase text-zinc-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Modelos de Conversação em Alta (Clique para Escolher):
+                    Modelos NVIDIA Recomendados (Clique para Selecionar):
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {NVIDIA_RECOMMENDED_MODELS.map((item) => (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => {
-                          setModel(item.id);
-                          setTestStatus("idle");
-                          setTestFeedback("");
-                        }}
+                        onClick={() => handleSelectModel(item.id)}
                         className={`p-3 rounded-2xl border text-xs font-mono transition-all flex flex-col justify-between gap-1 text-left cursor-pointer ${
                           model === item.id
-                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold"
+                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold ring-1 ring-amber-400/50"
                             : "bg-[#14141e] border-white/10 text-zinc-300 hover:border-white/30 hover:bg-[#181824]"
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="font-bold">{item.label}</span>
-                          {model === item.id && <span className="text-[10px] text-amber-400">✓ Ativo</span>}
+                          <span className="font-bold truncate">{item.label}</span>
+                          {model === item.id ? (
+                            <span className="text-[10px] text-amber-400 flex items-center gap-1 font-bold">
+                              <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              Ativo
+                            </span>
+                          ) : null}
                         </div>
                         <span className="text-[10px] text-zinc-400">
                           {item.badge}
