@@ -39,6 +39,13 @@ export function playPronunciation(text: string, rate: number = 0.95, lang: strin
   // Try to use saved voice preference for the persona
   let selectedVoice: SpeechSynthesisVoice | null = null;
 
+  if (!savedVoicePreferences && typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("english-lab-voice-preferences");
+      if (saved) savedVoicePreferences = JSON.parse(saved);
+    } catch {}
+  }
+
   if (savedVoicePreferences) {
     const voiceName = persona === "sarah" ? savedVoicePreferences.sarahVoice : savedVoicePreferences.marcusVoice;
     if (voiceName) {

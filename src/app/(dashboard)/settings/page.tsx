@@ -947,48 +947,43 @@ export default function SettingsPage() {
                       </select>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-3">
+                    <div className="flex flex-wrap items-center gap-2.5 pt-3">
                       <button
                         type="button"
                         onClick={() => {
                           if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                            // Test Sarah's voice
+                            window.speechSynthesis.cancel();
+                            const utterance = new SpeechSynthesisUtterance("Hello, I am Sarah, your British English tutor.");
+                            utterance.lang = "en-GB";
                             if (sarahVoice) {
-                              const utterance = new SpeechSynthesisUtterance("Hello, this is Sarah speaking.");
-                              utterance.lang = "en-GB";
-                              utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === sarahVoice)!;
-                              window.speechSynthesis.speak(utterance);
-                            } else {
-                              const utterance = new SpeechSynthesisUtterance("Hello, this is Sarah speaking (automatic voice).");
-                              utterance.lang = "en-GB";
-                              window.speechSynthesis.speak(utterance);
+                              const found = window.speechSynthesis.getVoices().find(v => v.name === sarahVoice);
+                              if (found) utterance.voice = found;
                             }
+                            window.speechSynthesis.speak(utterance);
                           }
                         }}
-                        className="text-xs font-muted"
+                        className="px-3.5 py-2 rounded-xl bg-[#14141e] hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                       >
-                        ▶️ Testar Sarah
+                        <span>▶️ Testar Voz Sarah (UK)</span>
                       </button>
+
                       <button
                         type="button"
                         onClick={() => {
                           if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                            // Test Marcus's voice
+                            window.speechSynthesis.cancel();
+                            const utterance = new SpeechSynthesisUtterance("Hey, what's up? I'm Marcus, your American English coach.");
+                            utterance.lang = "en-US";
                             if (marcusVoice) {
-                              const utterance = new SpeechSynthesisUtterance("Hello, this is Marcus speaking.");
-                              utterance.lang = "en-US";
-                              utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === marcusVoice)!;
-                              window.speechSynthesis.speak(utterance);
-                            } else {
-                              const utterance = new SpeechSynthesisUtterance("Hello, this is Marcus speaking (automatic voice).");
-                              utterance.lang = "en-US";
-                              window.speechSynthesis.speak(utterance);
+                              const found = window.speechSynthesis.getVoices().find(v => v.name === marcusVoice);
+                              if (found) utterance.voice = found;
                             }
+                            window.speechSynthesis.speak(utterance);
                           }
                         }}
-                        className="text-xs font-muted"
+                        className="px-3.5 py-2 rounded-xl bg-[#14141e] hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                       >
-                        ▶️ Testar Marcus
+                        <span>▶️ Testar Voz Marcus (US)</span>
                       </button>
                     </div>
                   </>
