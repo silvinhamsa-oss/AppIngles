@@ -56,7 +56,15 @@ export class OpenAICompatibleProvider implements AIProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`AI Provider Error (${response.status}): ${errorText}`);
+      let customError = `AI Provider Error (${response.status}): ${errorText}`;
+      if (response.status === 410) {
+        customError = `O modelo '${config.model}' atingiu o fim de vida (End of Life) na NVIDIA/provedor e foi desativado. Clique em 'Puxar Modelos da API' nas Configurações para escolher um modelo ativo.`;
+      } else if (response.status === 404) {
+        customError = `O modelo '${config.model}' não foi encontrado ou não está provisionado na sua conta. Clique em 'Puxar Modelos da API' para listar os modelos disponíveis.`;
+      } else if (response.status === 401 || response.status === 403) {
+        customError = `Chave de API inválida ou sem permissão para acessar o modelo '${config.model}'. Verifique sua chave no painel do provedor.`;
+      }
+      throw new Error(customError);
     }
 
     const data = await response.json();
@@ -95,7 +103,13 @@ export class OpenAICompatibleProvider implements AIProvider {
 
     if (!response.ok || !response.body) {
       const errorText = await response.text();
-      throw new Error(`AI Streaming Error (${response.status}): ${errorText}`);
+      let customError = `AI Streaming Error (${response.status}): ${errorText}`;
+      if (response.status === 410) {
+        customError = `O modelo '${config.model}' atingiu o fim de vida (End of Life) e não está mais disponível. Selecione outro modelo nas Configurações.`;
+      } else if (response.status === 404) {
+        customError = `O modelo '${config.model}' não foi encontrado na sua conta. Atualize a lista nas Configurações.`;
+      }
+      throw new Error(customError);
     }
 
     const reader = response.body.getReader();
@@ -128,18 +142,20 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   async testConnection(config: AIProviderConfig): Promise<{ success: boolean; message: string }> {
+    const startTime = Date.now();
     try {
       await this.chat(
         {
-          messages: [{ role: "user", content: "hi" }],
-          maxTokens: 1,
+          messages: [{ role: "user", content: "Hello! Reply with 1 word." }],
+          maxTokens: 5,
         },
         config
       );
 
+      const latency = Date.now() - startTime;
       return {
         success: true,
-        message: `Conexão bem-sucedida com ${config.provider.toUpperCase()} (${config.model}).`,
+        message: `✓ Conexão bem-sucedida com ${config.provider.toUpperCase()} (${config.model})! Latência: ${latency}ms. Pronto para conversar!`,
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Falha ao conectar com o provedor de IA.";

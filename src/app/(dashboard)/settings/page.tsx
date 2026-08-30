@@ -31,11 +31,12 @@ function getSavedAIConfig() {
 }
 
 const NVIDIA_RECOMMENDED_MODELS = [
-  { id: "meta/llama-3.3-70b-instruct", label: "Llama 3.3 70B (Recomendado)", badge: "Velocidade & Diálogo" },
-  { id: "nvidia/llama-3.1-nemotron-70b-instruct", label: "Nemotron 70B", badge: "Gramática & Raciocínio" },
+  { id: "nvidia/llama-3.1-nemotron-70b-instruct", label: "Nemotron 70B (Recomendado)", badge: "NVIDIA Oficial • Ativo" },
   { id: "mistralai/mistral-large-2-instruct", label: "Mistral Large 2", badge: "Vocabulário Rico" },
+  { id: "meta/llama-3.1-70b-instruct", label: "Llama 3.1 70B", badge: "Conversação Natural" },
+  { id: "meta/llama-3.1-8b-instruct", label: "Llama 3.1 8B", badge: "Ultra Rápido" },
   { id: "deepseek-ai/deepseek-r1", label: "DeepSeek R1", badge: "Raciocínio Profundo" },
-  { id: "meta/llama-3.1-8b-instruct", label: "Llama 3.1 8B", badge: "Ultra Leve" },
+  { id: "qwen/qwen2.5-72b-instruct", label: "Qwen 2.5 72B", badge: "Fluência Global" },
 ];
 
 export default function SettingsPage() {
@@ -49,7 +50,7 @@ export default function SettingsPage() {
   // AI Configuration State with lazy initializers
   const [provider, setProvider] = useState<AIProviderType>(() => getSavedAIConfig()?.provider || "openrouter");
   const [apiKey, setApiKey] = useState<string>(() => getSavedAIConfig()?.apiKey || "");
-  const [model, setModel] = useState<string>(() => getSavedAIConfig()?.model || "meta-llama/llama-3.3-70b-instruct");
+  const [model, setModel] = useState<string>(() => getSavedAIConfig()?.model || "nvidia/llama-3.1-nemotron-70b-instruct");
   const [baseUrl, setBaseUrl] = useState<string>(() => getSavedAIConfig()?.baseUrl || "");
   const [temperature, setTemperature] = useState<number>(() => getSavedAIConfig()?.temperature ?? 0.7);
   const [maxTokens, setMaxTokens] = useState<number>(() => getSavedAIConfig()?.maxTokens ?? 2048);
@@ -119,7 +120,7 @@ export default function SettingsPage() {
                 JSON.stringify({
                   provider: profile.ai_provider || "openrouter",
                   apiKey: profile.ai_api_key || "",
-                  model: profile.ai_model || "meta-llama/llama-3.3-70b-instruct",
+                  model: profile.ai_model || "nvidia/llama-3.1-nemotron-70b-instruct",
                   baseUrl: profile.ai_base_url || "",
                   temperature: Number(profile.ai_temperature) || 0.7,
                   maxTokens: profile.ai_max_tokens || 2048,
@@ -141,7 +142,7 @@ export default function SettingsPage() {
     setFetchedModels([]);
     setModelsFeedback(null);
     if (newProvider === "nvidia") {
-      setModel("meta/llama-3.3-70b-instruct");
+      setModel("nvidia/llama-3.1-nemotron-70b-instruct");
       setBaseUrl("https://integrate.api.nvidia.com/v1");
     } else if (newProvider === "openrouter") {
       setModel("meta-llama/llama-3.3-70b-instruct");
