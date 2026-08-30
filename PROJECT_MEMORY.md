@@ -14,12 +14,14 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 ---
 
 ## 🛡️ 2. Camada de Segurança & Roteamento
-* **Proxy / Middleware (`src/proxy.ts`):** Roda em conformidade com o Next.js 16.
+* **Proxy / Middleware (`src/proxy.ts` & `src/lib/supabase/middleware.ts`):** Roda em conformidade com o Next.js 16 utilizando os métodos modernos `getAll()` e `setAll(cookiesToSet)` do `@supabase/ssr`, garantindo sincronização imediata de cookies em chunks.
 * **Proteção de Rotas:** 
   - Rotas protegidas: `/(dashboard)/*` (`/dashboard`, `/talk`, `/learn`, `/vocabulary`, `/progress`, `/settings`, `/test`).
   - Redirecionamento automático: se `supabase.auth.getUser()` retornar nulo, o usuário é direcionado para `/login?next=...`.
   - Se o usuário já estiver logado e visitar `/login` ou `/signup`, é redirecionado para `/dashboard`.
+  - Navegação pós-login com `router.push()` + `router.refresh()` forçando a revalidação imediata dos cookies de sessão no servidor.
 * **Biometria Segura (`src/lib/biometrics.ts`):** Validação real de token no Supabase após leitura biométrica local.
+* **Trigger de Criação de Perfil (`supabase/fix_trigger.sql`):** Função `handle_new_user()` ultra-resiliente com `SECURITY DEFINER`, `search_path = public, auth, pg_temp`, `ON CONFLICT DO UPDATE` e tratamento de exceções para evitar o erro "Database error saving new user".
 
 ---
 
@@ -36,3 +38,4 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita sem uso de `any`.
 * **Build:** 16 páginas compiladas com Turbopack (Código de saída: 0).
+
