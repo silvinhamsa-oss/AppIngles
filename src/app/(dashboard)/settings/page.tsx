@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Sparkles,
   ListFilter,
+  Zap,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
 import { CEFRLevel } from "@/types/profile";
@@ -31,12 +32,12 @@ function getSavedAIConfig() {
 }
 
 const NVIDIA_RECOMMENDED_MODELS = [
-  { id: "nvidia/llama-3.1-nemotron-70b-instruct", label: "Nemotron 70B (Recomendado)", badge: "NVIDIA Oficial • Ativo" },
+  { id: "meta/llama-3.1-70b-instruct", label: "Llama 3.1 70B (Recomendado)", badge: "Conversação Natural" },
   { id: "mistralai/mistral-large-2-instruct", label: "Mistral Large 2", badge: "Vocabulário Rico" },
-  { id: "meta/llama-3.1-70b-instruct", label: "Llama 3.1 70B", badge: "Conversação Natural" },
   { id: "meta/llama-3.1-8b-instruct", label: "Llama 3.1 8B", badge: "Ultra Rápido" },
   { id: "deepseek-ai/deepseek-r1", label: "DeepSeek R1", badge: "Raciocínio Profundo" },
   { id: "qwen/qwen2.5-72b-instruct", label: "Qwen 2.5 72B", badge: "Fluência Global" },
+  { id: "google/gemma-2-27b-it", label: "Gemma 2 27B", badge: "Google" },
 ];
 
 export default function SettingsPage() {
@@ -50,7 +51,7 @@ export default function SettingsPage() {
   // AI Configuration State with lazy initializers
   const [provider, setProvider] = useState<AIProviderType>(() => getSavedAIConfig()?.provider || "openrouter");
   const [apiKey, setApiKey] = useState<string>(() => getSavedAIConfig()?.apiKey || "");
-  const [model, setModel] = useState<string>(() => getSavedAIConfig()?.model || "nvidia/llama-3.1-nemotron-70b-instruct");
+  const [model, setModel] = useState<string>(() => getSavedAIConfig()?.model || "meta/llama-3.1-70b-instruct");
   const [baseUrl, setBaseUrl] = useState<string>(() => getSavedAIConfig()?.baseUrl || "");
   const [temperature, setTemperature] = useState<number>(() => getSavedAIConfig()?.temperature ?? 0.7);
   const [maxTokens, setMaxTokens] = useState<number>(() => getSavedAIConfig()?.maxTokens ?? 2048);
@@ -60,8 +61,9 @@ export default function SettingsPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Dynamic Models State
-  const [fetchedModels, setFetchedModels] = useState<{ id: string; name?: string }[]>([]);
+  const [fetchedModels, setFetchedModels] = useState<{ id: string; name?: string; latencyMs?: number }[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isAutoDetecting, setIsAutoDetecting] = useState(false);
   const [modelsFeedback, setModelsFeedback] = useState<string | null>(null);
   const [isCustomModelInput, setIsCustomModelInput] = useState(false);
 
@@ -120,7 +122,7 @@ export default function SettingsPage() {
                 JSON.stringify({
                   provider: profile.ai_provider || "openrouter",
                   apiKey: profile.ai_api_key || "",
-                  model: profile.ai_model || "nvidia/llama-3.1-nemotron-70b-instruct",
+                  model: profile.ai_model || "meta/llama-3.1-70b-instruct",
                   baseUrl: profile.ai_base_url || "",
                   temperature: Number(profile.ai_temperature) || 0.7,
                   maxTokens: profile.ai_max_tokens || 2048,
@@ -142,7 +144,7 @@ export default function SettingsPage() {
     setFetchedModels([]);
     setModelsFeedback(null);
     if (newProvider === "nvidia") {
-      setModel("nvidia/llama-3.1-nemotron-70b-instruct");
+      setModel("meta/llama-3.1-70b-instruct");
       setBaseUrl("https://integrate.api.nvidia.com/v1");
     } else if (newProvider === "openrouter") {
       setModel("meta-llama/llama-3.3-70b-instruct");
@@ -159,6 +161,45 @@ export default function SettingsPage() {
     } else if (newProvider === "ollama") {
       setModel("llama3.2");
       setBaseUrl("http://localhost:11434/v1");
+    }
+  };
+
+  const handleAutoDetectOnlineModels = async () => {
+    if (!apiKey && provider !== "ollama") {
+      setModelsFeedback("Cole sua chave de API primeiro para testar os modelos.");
+      return;
+    }
+
+    setIsAutoDetecting(true);
+    setModelsFeedback(null);
+
+    try {
+      const res = await fetch("/api/ai/models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider,
+          apiKey,
+          baseUrl,
+          action: "auto-detect",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && Array.isArray(data.onlineModels) && data.onlineModels.length > 0) {
+        setFetchedModels(data.onlineModels);
+        if (data.bestModel) {
+          setModel(data.bestModel);
+        }
+        setModelsFeedback(`✓ Sucesso! ${data.onlineModels.length} modelo(s) de chat ativos encontrados e validados na sua conta! Selecionamos: ${data.bestModel}`);
+      } else {
+        setModelsFeedback(data.message || data.error || "Nenhum modelo respondeu com sucesso.");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao auto-detectar modelos.";
+      setModelsFeedback(message);
+    } finally {
+      setIsAutoDetecting(false);
     }
   };
 
@@ -185,7 +226,7 @@ export default function SettingsPage() {
       const data = await res.json();
       if (data.success && Array.isArray(data.models) && data.models.length > 0) {
         setFetchedModels(data.models);
-        setModelsFeedback(`✓ ${data.models.length} modelos encontrados com sucesso! Selecione um abaixo.`);
+        setModelsFeedback(`✓ ${data.models.length} modelos de chat encontrados na sua conta do provedor.`);
       } else {
         setModelsFeedback(data.error || "Nenhum modelo retornado pelo provedor.");
       }
@@ -421,21 +462,34 @@ export default function SettingsPage() {
             />
 
             {/* Model Selection & Dynamic Fetcher */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Modelo de IA ({provider.toUpperCase()})
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {provider === "nvidia" && (
+                    <button
+                      type="button"
+                      onClick={handleAutoDetectOnlineModels}
+                      disabled={isAutoDetecting || isLoadingModels}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-mono font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-amber-500/20"
+                    >
+                      <Zap className={`w-3.5 h-3.5 ${isAutoDetecting ? "animate-bounce text-zinc-950" : ""}`} />
+                      <span>{isAutoDetecting ? "Testando Modelos..." : "⚡ Auto-Detectar Ativo"}</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleFetchAvailableModels}
-                    disabled={isLoadingModels}
+                    disabled={isLoadingModels || isAutoDetecting}
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-300 text-xs font-mono font-bold transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isLoadingModels ? "animate-spin text-amber-400" : ""}`} />
-                    <span>{isLoadingModels ? "Consultando API..." : "Puxar Modelos da API"}</span>
+                    <span>{isLoadingModels ? "Consultando..." : "Listar Todos"}</span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setIsCustomModelInput(!isCustomModelInput)}
@@ -447,10 +501,10 @@ export default function SettingsPage() {
               </div>
 
               {modelsFeedback && (
-                <div className={`p-2.5 rounded-xl text-xs font-mono flex items-center gap-2 ${
+                <div className={`p-3 rounded-2xl text-xs font-mono flex items-center gap-2.5 ${
                   modelsFeedback.startsWith("✓") 
-                    ? "bg-emerald-500/10 border border-emerald-400/20 text-emerald-300"
-                    : "bg-amber-500/10 border border-amber-400/20 text-amber-300"
+                    ? "bg-emerald-500/15 border border-emerald-400/30 text-emerald-300"
+                    : "bg-amber-500/15 border border-amber-400/30 text-amber-300"
                 }`}>
                   <ListFilter className="w-4 h-4 shrink-0" />
                   <span>{modelsFeedback}</span>
@@ -459,7 +513,7 @@ export default function SettingsPage() {
 
               {/* Dynamic Select if fetched from API */}
               {fetchedModels.length > 0 && !isCustomModelInput ? (
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <select
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
@@ -467,7 +521,7 @@ export default function SettingsPage() {
                   >
                     {fetchedModels.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.id}
+                        {m.id} {m.latencyMs ? `(${m.latencyMs}ms - Online)` : ""}
                       </option>
                     ))}
                   </select>
@@ -478,34 +532,41 @@ export default function SettingsPage() {
               ) : (
                 <Input
                   type="text"
-                  placeholder="Ex: meta/llama-3.3-70b-instruct"
+                  placeholder="Ex: meta/llama-3.1-70b-instruct"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  helperText="Selecione um preset abaixo ou clique em 'Puxar Modelos da API' para listar sua conta."
+                  helperText="Use o botão '⚡ Auto-Detectar Ativo' ou selecione um dos presets abaixo."
                 />
               )}
 
               {/* Recommended Presets for NVIDIA */}
               {provider === "nvidia" && (
-                <div className="pt-1.5 space-y-1.5">
+                <div className="pt-2 space-y-2">
                   <span className="text-[11px] font-mono font-bold uppercase text-zinc-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    Modelos NVIDIA Recomendados (Clique para Selecionar):
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Modelos de Conversação em Alta (Clique para Escolher):
                   </span>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {NVIDIA_RECOMMENDED_MODELS.map((item) => (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setModel(item.id)}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-mono transition-all flex items-center gap-1.5 text-left cursor-pointer ${
+                        onClick={() => {
+                          setModel(item.id);
+                          setTestStatus("idle");
+                          setTestFeedback("");
+                        }}
+                        className={`p-3 rounded-2xl border text-xs font-mono transition-all flex flex-col justify-between gap-1 text-left cursor-pointer ${
                           model === item.id
-                            ? "bg-amber-500/20 border-amber-400 text-amber-300 shadow-sm shadow-amber-500/20 font-bold"
-                            : "bg-[#14141e] border-white/10 text-zinc-300 hover:border-white/30"
+                            ? "bg-amber-500/20 border-amber-400 text-white shadow-md shadow-amber-500/20 font-bold"
+                            : "bg-[#14141e] border-white/10 text-zinc-300 hover:border-white/30 hover:bg-[#181824]"
                         }`}
                       >
-                        <span>{item.label}</span>
-                        <span className="text-[10px] opacity-70 bg-white/5 px-1.5 py-0.5 rounded-md border border-white/5">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-bold">{item.label}</span>
+                          {model === item.id && <span className="text-[10px] text-amber-400">✓ Ativo</span>}
+                        </div>
+                        <span className="text-[10px] text-zinc-400">
                           {item.badge}
                         </span>
                       </button>

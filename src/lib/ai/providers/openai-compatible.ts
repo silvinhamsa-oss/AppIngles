@@ -41,78 +41,131 @@ export class OpenAICompatibleProvider implements AIProvider {
     const baseUrl = this.getBaseUrl(config);
     const headers = this.getHeaders(config);
 
-    const payload = {
-      model: config.model || "meta-llama/llama-3.3-70b-instruct",
-      messages: request.messages,
-      temperature: request.temperature ?? config.temperature ?? 0.7,
-      max_tokens: request.maxTokens ?? config.maxTokens ?? 2048,
-    };
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let customError = `AI Provider Error (${response.status}): ${errorText}`;
-      if (response.status === 410) {
-        customError = `O modelo '${config.model}' atingiu o fim de vida (End of Life) na NVIDIA/provedor e foi desativado. Clique em 'Puxar Modelos da API' nas Configurações para escolher um modelo ativo.`;
-      } else if (response.status === 404) {
-        customError = `O modelo '${config.model}' não foi encontrado ou não está provisionado na sua conta. Clique em 'Puxar Modelos da API' para listar os modelos disponíveis.`;
-      } else if (response.status === 401 || response.status === 403) {
-        customError = `Chave de API inválida ou sem permissão para acessar o modelo '${config.model}'. Verifique sua chave no painel do provedor.`;
+    const candidateModels = [config.model || "meta-llama/llama-3.3-70b-instruct"];
+    if (config.provider === "nvidia") {
+      const nvidiaFallbacks = [
+        "meta/llama-3.1-70b-instruct",
+        "mistralai/mistral-large-2-instruct",
+        "meta/llama-3.1-8b-instruct",
+        "deepseek-ai/deepseek-r1",
+      ];
+      for (const m of nvidiaFallbacks) {
+        if (!candidateModels.includes(m)) candidateModels.push(m);
       }
-      throw new Error(customError);
     }
 
-    const data = await response.json();
-    const message = data.choices?.[0]?.message?.content || "";
+    let lastError: Error | null = null;
 
-    return {
-      content: message,
-      finishReason: data.choices?.[0]?.finish_reason,
-      usage: data.usage
-        ? {
-            promptTokens: data.usage.prompt_tokens,
-            completionTokens: data.usage.completion_tokens,
-            totalTokens: data.usage.total_tokens,
-          }
-        : undefined,
-    };
+    for (const currentModel of candidateModels) {
+      const payload = {
+        model: currentModel,
+        messages: request.messages,
+        temperature: request.temperature ?? config.temperature ?? 0.7,
+        max_tokens: request.maxTokens ?? config.maxTokens ?? 2048,
+      };
+
+      try {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const message = data.choices?.[0]?.message?.content || "";
+          return {
+            content: message,
+            finishReason: data.choices?.[0]?.finish_reason,
+            usage: data.usage
+              ? {
+                  promptTokens: data.usage.prompt_tokens,
+                  completionTokens: data.usage.completion_tokens,
+                  totalTokens: data.usage.total_tokens,
+                }
+              : undefined,
+          };
+        }
+
+        const errorText = await response.text();
+        if (response.status === 410 || response.status === 404) {
+          // Tenta o próximo modelo do loop caso disponível
+          lastError = new Error(`O modelo '${currentModel}' não está disponível na NVIDIA (${response.status}).`);
+          continue;
+        } else {
+          throw new Error(`AI Provider Error (${response.status}): ${errorText}`);
+        }
+      } catch (err) {
+        if (err instanceof Error && !err.message.includes("não está disponível")) {
+          throw err;
+        }
+        lastError = err instanceof Error ? err : new Error("Erro desconhecido");
+      }
+    }
+
+    throw lastError || new Error(`Não foi possível conectar com os modelos da NVIDIA.`);
   }
 
   async *stream(request: ChatRequest, config: AIProviderConfig): AsyncIterable<string> {
     const baseUrl = this.getBaseUrl(config);
     const headers = this.getHeaders(config);
 
-    const payload = {
-      model: config.model || "meta-llama/llama-3.3-70b-instruct",
-      messages: request.messages,
-      temperature: request.temperature ?? config.temperature ?? 0.7,
-      max_tokens: request.maxTokens ?? config.maxTokens ?? 2048,
-      stream: true,
-    };
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok || !response.body) {
-      const errorText = await response.text();
-      let customError = `AI Streaming Error (${response.status}): ${errorText}`;
-      if (response.status === 410) {
-        customError = `O modelo '${config.model}' atingiu o fim de vida (End of Life) e não está mais disponível. Selecione outro modelo nas Configurações.`;
-      } else if (response.status === 404) {
-        customError = `O modelo '${config.model}' não foi encontrado na sua conta. Atualize a lista nas Configurações.`;
+    const candidateModels = [config.model || "meta-llama/llama-3.3-70b-instruct"];
+    if (config.provider === "nvidia") {
+      const nvidiaFallbacks = [
+        "meta/llama-3.1-70b-instruct",
+        "mistralai/mistral-large-2-instruct",
+        "meta/llama-3.1-8b-instruct",
+        "deepseek-ai/deepseek-r1",
+      ];
+      for (const m of nvidiaFallbacks) {
+        if (!candidateModels.includes(m)) candidateModels.push(m);
       }
-      throw new Error(customError);
     }
 
-    const reader = response.body.getReader();
+    let activeResponse: Response | null = null;
+    let lastErrorMsg = "";
+
+    for (const currentModel of candidateModels) {
+      const payload = {
+        model: currentModel,
+        messages: request.messages,
+        temperature: request.temperature ?? config.temperature ?? 0.7,
+        max_tokens: request.maxTokens ?? config.maxTokens ?? 2048,
+        stream: true,
+      };
+
+      try {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok && response.body) {
+          activeResponse = response;
+          break;
+        }
+
+        const errorText = await response.text();
+        if (response.status === 410 || response.status === 404) {
+          lastErrorMsg = `O modelo '${currentModel}' não está disponível na sua conta NVIDIA (${response.status}).`;
+          continue;
+        } else {
+          throw new Error(`AI Streaming Error (${response.status}): ${errorText}`);
+        }
+      } catch (err) {
+        if (err instanceof Error && !err.message.includes("não está disponível")) {
+          throw err;
+        }
+      }
+    }
+
+    if (!activeResponse || !activeResponse.body) {
+      throw new Error(lastErrorMsg || "Nenhum dos modelos da NVIDIA respondeu. Acesse Configurações para validar sua chave.");
+    }
+
+    const reader = activeResponse.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
 
