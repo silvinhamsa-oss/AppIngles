@@ -5,11 +5,10 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.");
+    throw new Error(
+      "Supabase environment variables are missing. Please define NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local or production environment."
+    );
   }
 
-  return createBrowserClient(
-    supabaseUrl || "https://mgotoricuqyeykcfwfaf.supabase.co",
-    supabaseAnonKey || "sb_publishable_1c9vpm6uQ2F8uIYDa6a_hg_KBTCSnC7"
-  );
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

@@ -18,59 +18,7 @@ import { playPronunciation } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
 import confetti from "canvas-confetti";
 
-export interface DictationExercise {
-  id: string;
-  title: string;
-  level: CEFRLevel;
-  accent: "en-US" | "en-GB" | "en-AU";
-  accentLabel: string;
-  targetSentence: string;
-  hintPt: string;
-  category: "phrasal_verbs" | "daily_sync" | "travel" | "tech";
-}
-
-export const SEED_DICTATIONS: DictationExercise[] = [
-  {
-    id: "dict_1",
-    title: "Alinhamento de Projeto & Latência",
-    level: "B1+",
-    accent: "en-US",
-    accentLabel: "American English",
-    targetSentence: "We need to figure out how to optimize this API latency.",
-    hintPt: "Dica: 'descobrir / resolver' como phrasal verb",
-    category: "tech",
-  },
-  {
-    id: "dict_2",
-    title: "Conectivo de Transição em Reunião",
-    level: "B1+",
-    accent: "en-GB",
-    accentLabel: "British English (Oxford)",
-    targetSentence: "Although it was challenging, the deployment was successful.",
-    hintPt: "Dica: Conectivo concessivo de contraste no início da frase",
-    category: "daily_sync",
-  },
-  {
-    id: "dict_3",
-    title: "Expressão Idiomática Corporativa",
-    level: "B2",
-    accent: "en-US",
-    accentLabel: "American English",
-    targetSentence: "Let us cut to the chase and discuss the core bottleneck.",
-    hintPt: "Dica: Expressão para 'ir direto ao ponto'",
-    category: "phrasal_verbs",
-  },
-  {
-    id: "dict_4",
-    title: "Saudações e Rotina Cotidiana (Iniciante)",
-    level: "A1",
-    accent: "en-US",
-    accentLabel: "American English",
-    targetSentence: "I drink coffee every morning and read tech news.",
-    hintPt: "Dica: Presente simples sobre hábito diário",
-    category: "daily_sync",
-  },
-];
+import { DictationExercise, SEED_DICTATIONS } from "@/lib/dictation-data";
 
 export function DictationPlayer() {
   const [exercises, setExercises] = useState<DictationExercise[]>(SEED_DICTATIONS);

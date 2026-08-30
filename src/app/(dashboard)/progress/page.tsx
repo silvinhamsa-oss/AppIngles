@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TrendingUp,
   Award,
@@ -20,29 +20,58 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { DictationPlayer } from "@/components/listening/DictationPlayer";
-import { SkillRadarData } from "@/types/profile";
+import { SkillRadarData, CEFRLevel } from "@/types/profile";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function ProgressPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [userLevel, setUserLevel] = useState<CEFRLevel>("B1+");
+  const [totalXp, setTotalXp] = useState(1240);
 
-  const radarData: SkillRadarData = {
+  const [radarData, setRadarData] = useState<SkillRadarData>({
     speaking: 74,
     vocabulary: 70,
     listening: 80,
     grammar: 82,
     reading: 86,
     writing: 75,
-  };
+  });
+
+  useEffect(() => {
+    async function loadProgressData() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          if (profile) {
+            if (profile.cefr_level) setUserLevel(profile.cefr_level as CEFRLevel);
+            if (profile.xp_points !== undefined) setTotalXp(profile.xp_points || 100);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading progress from Supabase:", err);
+      }
+    }
+
+    loadProgressData();
+  }, []);
 
   const cefrLevels = [
-    { code: "A1", label: "Breakthrough", status: "completed", percent: 100 },
-    { code: "A2", label: "Waystage", status: "completed", percent: 100 },
-    { code: "B1", label: "Threshold", status: "completed", percent: 100 },
-    { code: "B1+", label: "Target Profile", status: "current", percent: 72 },
-    { code: "B2", label: "Vantage", status: "next", percent: 0 },
-    { code: "C1", label: "Effective", status: "locked", percent: 0 },
-    { code: "C2", label: "Mastery", status: "locked", percent: 0 },
+    { code: "A1", label: "Breakthrough", status: userLevel === "A1" ? "current" : "completed", percent: 100 },
+    { code: "A2", label: "Waystage", status: userLevel === "A2" ? "current" : userLevel === "A1" ? "next" : "completed", percent: userLevel === "A1" ? 0 : 100 },
+    { code: "B1", label: "Threshold", status: userLevel === "B1" ? "current" : ["A1", "A2"].includes(userLevel) ? "locked" : "completed", percent: ["A1", "A2"].includes(userLevel) ? 0 : 100 },
+    { code: "B1+", label: "Target Profile", status: userLevel === "B1+" ? "current" : ["A1", "A2", "B1"].includes(userLevel) ? "locked" : "completed", percent: userLevel === "B1+" ? 74 : ["A1", "A2", "B1"].includes(userLevel) ? 0 : 100 },
+    { code: "B2", label: "Vantage", status: userLevel === "B2" ? "current" : ["C1", "C2"].includes(userLevel) ? "completed" : "next", percent: ["C1", "C2"].includes(userLevel) ? 100 : 0 },
+    { code: "C1", label: "Effective", status: userLevel === "C1" ? "current" : userLevel === "C2" ? "completed" : "locked", percent: userLevel === "C2" ? 100 : 0 },
+    { code: "C2", label: "Mastery", status: userLevel === "C2" ? "current" : "locked", percent: 0 },
   ];
 
   return (
@@ -58,7 +87,7 @@ export default function ProgressPage() {
             Seu Mapa de Fluência & Progresso
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-1 font-normal">
-            Acompanhe o equilíbrio das 6 competências essenciais e seu avanço contínuo do nível B1+ rumo ao C2.
+            Acompanhe o equilíbrio das 6 competências essenciais e seu avanço contínuo do nível {userLevel} rumo ao C2.
           </p>
         </div>
 
@@ -94,73 +123,84 @@ export default function ProgressPage() {
                   <span>Jornada de Nível: Rumo ao B2</span>
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Você completou <strong>72% dos requisitos</strong> para validar o nível B2 Independente.
+                  Pontuação acumulada: <strong className="text-amber-400 font-mono">{totalXp} XP</strong> • Meta atual: Fluência independente
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
-                Nível Atual: B1+
-              </span>
+              <Badge variant="gold" size="md" className="font-mono">
+                Nível Atual: {userLevel}
+              </Badge>
             </div>
 
-            {/* Stepper pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
+            {/* Step markers */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-2">
               {cefrLevels.map((lvl) => (
                 <div
                   key={lvl.code}
                   className={`p-3 rounded-2xl border text-center transition-all ${
-                    lvl.status === "completed"
-                      ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
-                      : lvl.status === "current"
-                      ? "bg-amber-500/20 border-amber-400 text-amber-200 ring-2 ring-amber-500/30 shadow-lg"
-                      : "bg-[#14141e] border-white/5 text-zinc-500 opacity-60"
+                    lvl.status === "current"
+                      ? "bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/30"
+                      : lvl.status === "completed"
+                      ? "bg-[#14141e] border-emerald-500/40"
+                      : "bg-[#101018] border-white/5 opacity-60"
                   }`}
                 >
-                  <div className="text-xs font-mono font-bold">{lvl.code}</div>
-                  <div className="text-[10px] truncate mt-0.5">{lvl.label}</div>
-                  {lvl.status === "completed" && <CheckCircle2 className="w-3.5 h-3.5 mx-auto mt-1 text-emerald-400" />}
-                  {lvl.status === "current" && <div className="text-[9px] font-bold font-mono text-amber-400 mt-1">{lvl.percent}%</div>}
+                  <div className="text-xs font-mono font-bold text-white">{lvl.code}</div>
+                  <div className="text-[10px] text-zinc-400 truncate my-1">{lvl.label}</div>
+                  <div className="text-[9px] font-mono font-bold uppercase text-amber-400">
+                    {lvl.status === "completed" && "Concluído"}
+                    {lvl.status === "current" && "Em Foco"}
+                    {lvl.status === "next" && "Próximo"}
+                    {lvl.status === "locked" && "Bloqueado"}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Radar & Detailed Breakdown Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* English Radar Visualizer */}
-            <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl flex flex-col items-center justify-center">
-              <div className="w-full flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-amber-400" />
-                  <span>English Radar Diagnóstico</span>
+          {/* 2-Column: Radar + Key Strengths */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <EnglishRadar data={radarData} currentLevel={userLevel} />
+
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-5 flex flex-col justify-between">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <span>Diagnóstico Pedagógico de Competências</span>
                 </h3>
-                <span className="text-xs font-mono text-zinc-400">Score Médio: 77%</span>
-              </div>
 
-              <div className="py-4">
-                <EnglishRadar data={radarData} size={300} />
-              </div>
-            </div>
-
-            {/* Individual Skills Progress Bars */}
-            <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">Desempenho por Competência</h3>
-
-              {[
-                { label: "Reading (Leitura & Compreensão)", score: radarData.reading, color: "amber" },
-                { label: "Grammar (Precisão Estrutural)", score: radarData.grammar, color: "emerald" },
-                { label: "Listening (Compreensão Auditiva)", score: radarData.listening, color: "amber" },
-                { label: "Writing (Redação & Síntese)", score: radarData.writing, color: "emerald" },
-                { label: "Speaking (Fluência Oral)", score: radarData.speaking, color: "amber" },
-                { label: "Vocabulary (Vocabulário Ativo)", score: radarData.vocabulary, color: "emerald" },
-              ].map((skill, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-zinc-300">{skill.label}</span>
-                    <span className="text-white font-mono font-bold">{skill.score}%</span>
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-[#14141e] border border-white/5 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-white">Domínio de Reading & Estrutura</span>
+                      <span className="font-mono text-emerald-400 font-bold">{radarData.reading}%</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">Excelente compreensão textual sem bloqueios de vocabulário técnico.</p>
                   </div>
-                  <ProgressBar value={skill.score} max={100} variant={skill.color as any} size="sm" showLabel={false} />
+
+                  <div className="p-3.5 rounded-2xl bg-[#14141e] border border-white/5 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-white">Compreensão Auditiva (Listening)</span>
+                      <span className="font-mono text-emerald-400 font-bold">{radarData.listening}%</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">Boa assimilação de sotaques americano e britânico em velocidades normais.</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#14141e] border border-amber-500/20 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-amber-300">Speaking & Espontaneidade (Foco Atual)</span>
+                      <span className="font-mono text-amber-400 font-bold">{radarData.speaking}%</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">Pratique 15 min diários no chat com áudio para acelerar o tempo de resposta e eliminar pausas.</p>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              <Link href="/talk" className="pt-3">
+                <Button variant="gold" className="w-full text-xs font-bold">
+                  <span>Praticar Fala com Sarah Agora</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -168,75 +208,17 @@ export default function ProgressPage() {
 
       {activeTab === "listening" && (
         <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/20 via-[#0d0d12] to-cyan-500/20 border border-amber-500/30">
-            <h3 className="text-xl font-bold text-white">Laboratório de Compreensão Auditiva & Ditado</h3>
-            <p className="text-xs text-zinc-300 mt-1">
-              Treine seu ouvido para diferentes sotaques nativos (US, UK, AU) e velocidade de fala variável.
-            </p>
-          </div>
-
           <DictationPlayer />
         </div>
       )}
 
       {activeTab === "history" && (
-        <div className="space-y-4">
-          <div className="p-6 rounded-3xl bg-[#0d0d14] border border-white/10 space-y-4">
-            <h3 className="text-base font-bold text-white">Histórico de Sessões de Fala Recentes</h3>
-
-            <div className="space-y-3">
-              {[
-                {
-                  date: "Hoje às 14:35",
-                  topic: "Projetos & Arquitetura Tech",
-                  duration: "18 min",
-                  score: "82%",
-                  xp: "+75 XP",
-                  status: "Excelente Fluência",
-                },
-                {
-                  date: "Ontem às 19:10",
-                  topic: "Daily Standup & Alinhamento",
-                  duration: "15 min",
-                  score: "78%",
-                  xp: "+60 XP",
-                  status: "Bom ritmo",
-                },
-                {
-                  date: "27 de Agosto",
-                  topic: "Bate-Papo Livre (Free Chat)",
-                  duration: "22 min",
-                  score: "85%",
-                  xp: "+90 XP",
-                  status: "Vocabulário rico",
-                },
-              ].map((sess, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-2xl bg-[#14141e] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{sess.topic}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                        {sess.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-zinc-400 mt-0.5">
-                      {sess.date} • Duração: {sess.duration}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-base font-black text-amber-400 font-mono">{sess.score}</div>
-                      <div className="text-[10px] text-zinc-400">{sess.xp}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-4 text-center">
+          <Calendar className="w-10 h-10 text-amber-400 mx-auto" />
+          <h3 className="text-lg font-bold text-white">Histórico de Sessões de Fala</h3>
+          <p className="text-xs text-zinc-400 max-w-md mx-auto">
+            Todas as suas conversas avaliadas com relatórios pós-sessão e notas CEFR ficam salvas com segurança no seu banco de dados Supabase.
+          </p>
         </div>
       )}
     </div>
