@@ -16,6 +16,8 @@ export interface AIProviderConfig {
   maxTokens?: number;
 }
 
+export type AIConfig = AIProviderConfig;
+
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;

@@ -7,14 +7,20 @@ export type PartOfSpeech = "noun" | "verb" | "phrasal_verb" | "adjective" | "adv
 export interface VocabularyItem {
   id: string;
   word: string;
+  phoneticIpa?: string;
   translationPt: string;
-  definitionEn: string;
+  definitionEn?: string;
   partOfSpeech: PartOfSpeech;
   cefrLevel: CEFRLevel;
   exampleSentence: string;
   contextNote?: string;
   audioUrl?: string;
   tags?: string[];
+  repetitionCount?: number;
+  intervalDays?: number;
+  easeFactor?: number;
+  nextReviewDate?: string;
+  status?: VocabularyStatus;
 }
 
 export interface UserVocabularyItem extends VocabularyItem {

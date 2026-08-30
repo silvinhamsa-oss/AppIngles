@@ -22,6 +22,30 @@ export interface ConversationMessage {
   timestamp: string;
 }
 
+export interface EvaluationReport {
+  cefrLevel: CEFRLevel;
+  overallScore: number;
+  fluencyScore: number;
+  vocabularyScore: number;
+  grammarScore: number;
+  naturalnessScore: number;
+  confidenceScore: number;
+  feedbackPt: string;
+  strengths: string[];
+  improvements: string[];
+  sentenceCorrections: Array<{
+    original: string;
+    suggested: string;
+    explanationPt: string;
+  }>;
+  vocabularyToSave: Array<{
+    word: string;
+    phoneticIpa: string;
+    translationPt: string;
+    exampleEn: string;
+  }>;
+}
+
 export interface ConversationReport {
   sessionId: string;
   durationSeconds: number;

@@ -22,30 +22,98 @@ import { SEED_VOCABULARY } from "@/lib/vocabulary-data";
 import { VocabularyItem } from "@/types/vocabulary";
 import { playPronunciation } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
+import { createClient } from "@/lib/supabase/client";
 
 export default function VocabularyPage() {
   const [items, setItems] = useState<VocabularyItem[]>(SEED_VOCABULARY);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modals
   const [isFlashcardOpen, setIsFlashcardOpen] = useState(false);
   const [isAddWordOpen, setIsAddWordOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("english-lab-vocab-items");
-    if (saved) {
+    async function loadVocabulary() {
+      setIsLoading(true);
       try {
-        setItems(JSON.parse(saved));
-      } catch {}
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data, error } = await supabase
+            .from("user_vocabulary")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            const mappedItems: VocabularyItem[] = data.map((d: any) => ({
+              id: d.id,
+              word: d.word,
+              phoneticIpa: d.phonetic_ipa || "/.../",
+              partOfSpeech: d.part_of_speech || "noun",
+              cefrLevel: (d.cefr_level as CEFRLevel) || "B1+",
+              translationPt: d.translation_pt,
+              definitionEn: d.definition_en || "",
+              exampleSentence: d.example_sentence || "",
+              repetitionCount: d.repetition_count || 0,
+              intervalDays: d.interval_days || 1,
+              easeFactor: Number(d.ease_factor) || 2.5,
+              nextReviewDate: d.next_review_date || new Date().toISOString(),
+              status: d.status || "learning",
+            }));
+            setItems(mappedItems);
+            return;
+          }
+        }
+
+        // Fallback to local cache if offline or unauthenticated
+        const saved = localStorage.getItem("english-lab-vocab-items");
+        if (saved) {
+          setItems(JSON.parse(saved));
+        }
+      } catch (err) {
+        console.error("Error loading vocabulary:", err);
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    loadVocabulary();
   }, []);
 
-  const handleAddWord = (newItem: VocabularyItem) => {
+  const handleAddWord = async (newItem: VocabularyItem) => {
     const updated = [newItem, ...items];
     setItems(updated);
     localStorage.setItem("english-lab-vocab-items", JSON.stringify(updated));
+
+    // Persist to Supabase if authenticated
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("user_vocabulary").insert({
+          user_id: user.id,
+          word: newItem.word,
+          phonetic_ipa: newItem.phoneticIpa,
+          part_of_speech: newItem.partOfSpeech,
+          cefr_level: newItem.cefrLevel,
+          translation_pt: newItem.translationPt,
+          definition_en: newItem.definitionEn,
+          example_sentence: newItem.exampleSentence,
+          repetition_count: newItem.repetitionCount || 0,
+          interval_days: newItem.intervalDays || 1,
+          ease_factor: newItem.easeFactor || 2.5,
+          next_review_date: newItem.nextReviewDate,
+          status: newItem.status || "learning",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to persist word to Supabase:", err);
+    }
   };
 
   const filteredItems = items.filter((item) => {
@@ -84,186 +152,137 @@ export default function VocabularyPage() {
           <Button
             variant="outline"
             onClick={() => setIsAddWordOpen(true)}
-            className="border-white/15 text-xs"
+            className="flex items-center gap-1.5 text-xs font-bold"
           >
-            <Plus className="w-4 h-4 mr-1" />
-            <span>Adicionar Termo</span>
+            <Plus className="w-4 h-4 text-emerald-400" />
+            <span>Adicionar Palavra</span>
           </Button>
 
           <Button
             variant="gold"
             onClick={() => setIsFlashcardOpen(true)}
-            className="shadow-lg shadow-amber-500/20 text-xs"
+            className="flex items-center gap-2 text-xs font-black shadow-lg shadow-amber-500/20"
           >
-            <Play className="w-4 h-4 mr-1 fill-zinc-950" />
+            <Play className="w-4 h-4 fill-zinc-950" />
             <span>Praticar Flashcards 3D ({items.length})</span>
           </Button>
         </div>
       </div>
 
-      {/* Memory Status Metrics Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-[#0d0d14] border border-white/10 text-left">
-          <div className="text-2xl font-black text-white font-mono">{items.length}</div>
-          <div className="text-xs text-zinc-400 mt-0.5">Palavras no Banco</div>
+      {/* Filter and Search Bar */}
+      <div className="p-4 rounded-2xl bg-[#0d0d14] border border-white/10 flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Buscar por palavra, tradução ou significado..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#14141e] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+          />
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0d0d14] border border-emerald-500/30 text-left">
-          <div className="text-2xl font-black text-emerald-400 font-mono">
-            {items.filter((i) => i.cefrLevel === "B1" || i.cefrLevel === "B1+").length}
-          </div>
-          <div className="text-xs text-emerald-300/80 mt-0.5">Nível Intermediário</div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0d0d14] border border-amber-500/30 text-left">
-          <div className="text-2xl font-black text-amber-400 font-mono">
-            {items.filter((i) => i.partOfSpeech === "phrasal_verb" || i.partOfSpeech === "connector").length}
-          </div>
-          <div className="text-xs text-amber-300/80 mt-0.5">Phrasal Verbs & Conectivos</div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0d0d14] border border-white/10 text-left">
-          <div className="text-2xl font-black text-cyan-400 font-mono">94%</div>
-          <div className="text-xs text-zinc-400 mt-0.5">Taxa de Retenção Ativa</div>
-        </div>
-      </div>
-
-      {/* Search & Filters Bar */}
-      <div className="p-4 rounded-3xl bg-[#0d0d14] border border-white/10 space-y-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Buscar por palavra em inglês ou tradução em português..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#14141e] border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60"
-            />
-          </div>
-
-          {/* Level Filter Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto p-1 bg-black/40 rounded-2xl border border-white/10">
-            {["ALL", "A1", "A2", "B1", "B1+", "B2"].map((lvl) => (
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Level Filter */}
+          <div className="flex items-center gap-1 bg-[#14141e] p-1 rounded-xl border border-white/10 text-xs">
+            {["ALL", "A1", "A2", "B1", "B1+", "B2", "C1"].map((lvl) => (
               <button
                 key={lvl}
                 onClick={() => setSelectedLevel(lvl)}
-                className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg font-mono font-bold transition-all cursor-pointer ${
                   selectedLevel === lvl
                     ? "bg-amber-500 text-zinc-950 shadow-sm"
                     : "text-zinc-400 hover:text-white"
                 }`}
               >
-                {lvl === "ALL" ? "Todos" : lvl}
+                {lvl}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Type Filter */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-1 border-t border-white/5 text-xs">
-          <span className="text-zinc-500 font-bold uppercase tracking-wider font-mono text-[10px] shrink-0">
-            Classe:
-          </span>
-          {[
-            { id: "ALL", label: "Todas" },
-            { id: "phrasal_verb", label: "Phrasal Verbs" },
-            { id: "connector", label: "Conectivos" },
-            { id: "adjective", label: "Adjetivos" },
-            { id: "verb", label: "Verbos" },
-            { id: "adverb", label: "Advérbios" },
-          ].map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setSelectedType(type.id)}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer shrink-0 font-medium ${
-                selectedType === type.id
-                  ? "bg-white/15 text-white border border-white/20 font-bold"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
+          {/* Type Filter */}
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="px-3 py-1.5 rounded-xl bg-[#14141e] border border-white/10 text-xs text-zinc-300 focus:outline-none cursor-pointer"
+          >
+            <option value="ALL">Todas as Classes</option>
+            <option value="verb">Verbos</option>
+            <option value="phrasal_verb">Phrasal Verbs</option>
+            <option value="noun">Substantivos</option>
+            <option value="adjective">Adjetivos</option>
+            <option value="connector">Conectivos</option>
+            <option value="idiom">Expressões / Idioms</option>
+          </select>
         </div>
       </div>
 
-      {/* Vocabulary Cards Grid */}
+      {/* Vocabulary Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            className="p-5 rounded-3xl bg-[#0d0d14] border border-white/10 hover:border-amber-500/40 hover:bg-[#12121a] transition-all flex flex-col justify-between group shadow-sm"
+            className="p-5 rounded-3xl bg-[#0d0d14] border border-white/10 hover:border-emerald-500/40 transition-all group relative overflow-hidden flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
+                  <h3 className="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
                     {item.word}
-                  </span>
+                  </h3>
                   <button
-                    onClick={() => playPronunciation(item.word)}
-                    className="p-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 text-zinc-400 hover:text-amber-300 transition-all cursor-pointer"
-                    title="Ouvir pronúncia nativa"
+                    onClick={() => playPronunciation(item.word, 0.95, "en-US")}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-300 transition-all"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 shrink-0">
-                  {item.cefrLevel}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" size="sm" className="font-mono text-[10px]">
+                    {item.cefrLevel}
+                  </Badge>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 border border-white/10 uppercase">
+                    {item.partOfSpeech}
+                  </span>
+                </div>
               </div>
 
-              {item.contextNote && (
-                <div className="text-xs font-mono text-amber-400/80 mb-2">
-                  {item.contextNote}
-                </div>
-              )}
+              <div className="text-xs font-mono text-zinc-400 mb-2">
+                {item.phoneticIpa}
+              </div>
 
-              <p className="text-sm font-semibold text-zinc-200 mb-2">
+              <div className="p-2.5 rounded-xl bg-[#14141e] border border-white/5 text-xs text-emerald-200 font-semibold mb-3">
                 {item.translationPt}
-              </p>
-
-              {item.definitionEn && (
-                <p className="text-xs text-zinc-400 leading-relaxed font-normal mb-3">
-                  {item.definitionEn}
-                </p>
-              )}
+              </div>
 
               {item.exampleSentence && (
-                <div className="p-3 rounded-2xl bg-black/40 border border-white/5 text-xs text-zinc-300 italic">
+                <p className="text-xs text-zinc-300 italic leading-relaxed border-l-2 border-emerald-500/40 pl-2.5 py-0.5">
                   "{item.exampleSentence}"
-                </div>
+                </p>
               )}
             </div>
 
-            <div className="pt-4 mt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-400">
-              <span className="capitalize font-mono text-[10px] px-2 py-0.5 rounded bg-white/5">
-                {item.partOfSpeech.replace("_", " ")}
+            {/* SRS Status Footer */}
+            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-zinc-400">
+              <span className="flex items-center gap-1 font-mono">
+                <RotateCcw className="w-3 h-3 text-emerald-400" />
+                Int: <strong>{item.intervalDays}d</strong> (Rev #{item.repetitionCount})
               </span>
-              <span className="text-emerald-400 font-medium">SRS Ativo (SM-2)</span>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {item.status}
+              </span>
             </div>
           </div>
         ))}
       </div>
 
-      {filteredItems.length === 0 && (
-        <div className="p-12 text-center rounded-3xl bg-[#0d0d14] border border-white/10 space-y-3">
-          <Brain className="w-10 h-10 text-zinc-500 mx-auto" />
-          <h3 className="text-base font-bold text-white">Nenhum termo encontrado</h3>
-          <p className="text-xs text-zinc-400">Tente buscar por outra palavra ou limpe os filtros de nível.</p>
-        </div>
-      )}
-
-      {/* 3D Flashcard Modal */}
+      {/* Modals */}
       <FlashcardModal
         isOpen={isFlashcardOpen}
         onClose={() => setIsFlashcardOpen(false)}
         items={items}
       />
 
-      {/* Add Word Modal */}
       <AddWordModal
         isOpen={isAddWordOpen}
         onClose={() => setIsAddWordOpen(false)}

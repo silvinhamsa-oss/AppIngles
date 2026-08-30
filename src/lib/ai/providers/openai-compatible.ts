@@ -131,8 +131,8 @@ export class OpenAICompatibleProvider implements AIProvider {
     try {
       const res = await this.chat(
         {
-          messages: [{ role: "user", content: "Say OK" }],
-          maxTokens: 5,
+          messages: [{ role: "user", content: "hi" }],
+          maxTokens: 1,
         },
         config
       );

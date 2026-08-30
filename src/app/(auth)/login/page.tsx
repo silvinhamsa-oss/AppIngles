@@ -11,10 +11,8 @@ import {
   AlertCircle,
   Lock,
   Mail,
-  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 import { authenticateWithBiometrics, isBiometricsAvailable } from "@/lib/biometrics";
 
@@ -44,21 +42,21 @@ export default function LoginPage() {
       });
 
       if (error) {
-        // Fallback for demonstration/mock mode if Supabase credentials are empty
-        if (error.message.includes("Invalid API key") || error.message.includes("fetch failed")) {
-          setFeedback({ type: "success", message: "Login realizado com sucesso! Redirecionando..." });
-          setTimeout(() => router.push("/dashboard"), 1000);
-          return;
-        }
         throw error;
       }
 
       setFeedback({ type: "success", message: "Login realizado com sucesso! Redirecionando..." });
       router.push("/dashboard");
     } catch (err: any) {
+      let friendlyMessage = err.message || "Erro ao fazer login. Verifique seu e-mail e senha.";
+      if (err.message?.includes("Invalid login credentials")) {
+        friendlyMessage = "E-mail ou senha incorretos. Por favor, tente novamente.";
+      } else if (err.message?.includes("Email not confirmed")) {
+        friendlyMessage = "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
+      }
       setFeedback({
         type: "error",
-        message: err.message || "Erro ao fazer login. Verifique seu e-mail e senha.",
+        message: friendlyMessage,
       });
     } finally {
       setIsLoading(false);
@@ -71,12 +69,12 @@ export default function LoginPage() {
 
     try {
       const res = await authenticateWithBiometrics();
-      if (res.success) {
+      if (res.success && res.userEmail) {
         setFeedback({
           type: "success",
-          message: "Autenticação biométrica (Face ID / Digital) confirmada! Entrando...",
+          message: "Autenticação biométrica validada! Redirecionando...",
         });
-        setTimeout(() => router.push("/dashboard"), 1200);
+        setTimeout(() => router.push("/dashboard"), 1000);
       } else {
         setFeedback({ type: "error", message: res.message });
       }
@@ -88,13 +86,20 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message: "Falha ao iniciar autenticação com Google.",
+      });
+    }
   };
 
   return (
@@ -122,7 +127,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleBiometricAuth}
             disabled={isBiometricLoading}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/40 hover:border-amber-400 text-amber-300 font-bold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg shadow-amber-500/10 active:scale-98"
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/40 hover:border-amber-400 text-amber-300 font-bold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg shadow-amber-500/10 active:scale-98 disabled:opacity-50"
           >
             <Fingerprint className="w-5 h-5 text-amber-400 animate-pulse" />
             <span>
@@ -178,9 +183,6 @@ export default function LoginPage() {
                 <label className="text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Senha
                 </label>
-                <a href="#" className="text-[11px] text-amber-400 hover:text-amber-300">
-                  Esqueceu a senha?
-                </a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />

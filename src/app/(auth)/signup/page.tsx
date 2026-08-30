@@ -48,14 +48,6 @@ export default function SignupPage() {
       });
 
       if (error) {
-        if (error.message.includes("Invalid API key") || error.message.includes("fetch failed")) {
-          if (enableBiometrics) {
-            await registerBiometrics(email);
-          }
-          setFeedback({ type: "success", message: "Conta criada com sucesso! Redirecionando..." });
-          setTimeout(() => router.push("/dashboard"), 1000);
-          return;
-        }
         throw error;
       }
 
@@ -69,9 +61,15 @@ export default function SignupPage() {
       });
       router.push("/dashboard");
     } catch (err: any) {
+      let friendlyMessage = err.message || "Erro ao criar conta. Tente novamente.";
+      if (err.message?.includes("User already registered")) {
+        friendlyMessage = "Este e-mail já está cadastrado. Tente fazer login.";
+      } else if (err.message?.includes("Password should be at least 6 characters")) {
+        friendlyMessage = "A senha deve ter no mínimo 6 caracteres.";
+      }
       setFeedback({
         type: "error",
-        message: err.message || "Erro ao criar conta. Tente novamente.",
+        message: friendlyMessage,
       });
     } finally {
       setIsLoading(false);
@@ -197,7 +195,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Enable Biometrics Checkbox (Mobile First) */}
+            {/* Enable Biometrics Checkbox */}
             <label className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/5 border border-white/10 cursor-pointer">
               <input
                 type="checkbox"

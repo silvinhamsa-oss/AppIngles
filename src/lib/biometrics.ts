@@ -1,6 +1,6 @@
 /**
  * Biometric Authentication (WebAuthn / Passkeys / Face ID / Touch ID / Fingerprint)
- * Uses native browser Web Authentication API.
+ * Uses native browser Web Authentication API without mock fallbacks.
  */
 
 export async function isBiometricsAvailable(): Promise<boolean> {
@@ -18,7 +18,7 @@ export async function isBiometricsAvailable(): Promise<boolean> {
 
 export async function registerBiometrics(userEmail: string): Promise<{ success: boolean; message: string }> {
   if (!(await isBiometricsAvailable())) {
-    return { success: false, message: "Biometria não suportada neste dispositivo." };
+    return { success: false, message: "Biometria não suportada neste dispositivo ou navegador." };
   }
 
   try {
@@ -64,13 +64,26 @@ export async function registerBiometrics(userEmail: string): Promise<{ success: 
     return { success: false, message: "Não foi possível registrar a credencial biométrica." };
   } catch (err: any) {
     console.error("Biometric registration error:", err);
-    return { success: false, message: err.message || "Erro ao registrar biometria." };
+    return {
+      success: false,
+      message: err.name === "NotAllowedError" 
+        ? "Registro biométrico cancelado pelo usuário." 
+        : err.message || "Erro ao registrar biometria.",
+    };
   }
 }
 
 export async function authenticateWithBiometrics(): Promise<{ success: boolean; userEmail?: string; message: string }> {
   if (!(await isBiometricsAvailable())) {
     return { success: false, message: "Biometria não disponível neste navegador." };
+  }
+
+  const registeredEmail = typeof window !== "undefined" ? localStorage.getItem("english-lab-biometric-email") : null;
+  if (!registeredEmail) {
+    return {
+      success: false,
+      message: "Nenhuma biometria cadastrada neste aparelho. Faça login com seu e-mail e senha primeiro.",
+    };
   }
 
   try {
@@ -89,22 +102,21 @@ export async function authenticateWithBiometrics(): Promise<{ success: boolean; 
     const assertion = await navigator.credentials.get(getOptions);
 
     if (assertion) {
-      const email = localStorage.getItem("english-lab-biometric-email") || "welld@example.com";
       return {
         success: true,
-        userEmail: email,
+        userEmail: registeredEmail,
         message: "Autenticação biométrica validada com sucesso!",
       };
     }
 
     return { success: false, message: "Falha na verificação biométrica." };
   } catch (err: any) {
-    // If canceled or failed in mock/local mode, fallback gracefully for demonstration
-    const email = localStorage.getItem("english-lab-biometric-email") || "welld@example.com";
+    console.error("Biometric authentication error:", err);
     return {
-      success: true,
-      userEmail: email,
-      message: "Biometria validada com sucesso no dispositivo móvel!",
+      success: false,
+      message: err.name === "NotAllowedError"
+        ? "Leitura biométrica cancelada pelo usuário."
+        : err.message || "Falha na leitura biométrica.",
     };
   }
 }

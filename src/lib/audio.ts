@@ -1,5 +1,14 @@
 "use client";
 
+let cachedVoices: SpeechSynthesisVoice[] = [];
+
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  cachedVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    cachedVoices = window.speechSynthesis.getVoices();
+  };
+}
+
 // Web Speech API Text-to-Speech (TTS)
 export function playPronunciation(text: string, rate: number = 0.95, lang: string = "en-US") {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -14,10 +23,9 @@ export function playPronunciation(text: string, rate: number = 0.95, lang: strin
   utterance.rate = rate;
   utterance.pitch = 1.0;
 
-  // Try to find a high quality English voice (Google, Samantha, Daniel, Natural)
-  const voices = window.speechSynthesis.getVoices();
+  const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
   const englishVoice = voices.find(
-    (v) => (v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Alex")))
+    (v) => (v.lang.startsWith(lang.substring(0, 2)) && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Alex") || v.name.includes("UK") || v.name.includes("US")))
   ) || voices.find((v) => v.lang.startsWith("en"));
 
   if (englishVoice) {
@@ -66,11 +74,16 @@ export function startSpeechRecognition(
       }
     }
 
-    callbacks.onResult(finalTranscript || interimTranscript, Boolean(finalTranscript));
+    const currentText = (finalTranscript || interimTranscript).trim();
+    if (currentText) {
+      callbacks.onResult(currentText, Boolean(finalTranscript));
+    }
   };
 
   recognition.onerror = (event: any) => {
-    callbacks.onError(event.error);
+    if (event.error !== "no-speech") {
+      callbacks.onError(event.error);
+    }
   };
 
   recognition.onend = () => {
@@ -79,8 +92,9 @@ export function startSpeechRecognition(
 
   try {
     recognition.start();
-  } catch (err: any) {
-    callbacks.onError(err.message);
+  } catch (e: any) {
+    callbacks.onError(e.message || "Could not start speech recognition.");
+    return null;
   }
 
   return {

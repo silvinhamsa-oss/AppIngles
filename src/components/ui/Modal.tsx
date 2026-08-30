@@ -52,23 +52,23 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
       <div
         className={cn(
-          "relative w-full glass-panel border border-slate-700/60 shadow-2xl rounded-3xl p-6 sm:p-8 z-10 overflow-hidden transform transition-all",
+          "relative w-full bg-[#0d0d14] border border-white/15 shadow-2xl shadow-black/80 rounded-3xl p-6 sm:p-8 z-10 overflow-hidden transform transition-all text-white",
           maxWidthStyles[maxWidth]
         )}
       >
         <div className="flex items-start justify-between mb-5">
           <div>
-            {title && <h3 className="text-xl font-bold text-slate-100">{title}</h3>}
-            {description && <p className="text-sm text-slate-400 mt-1">{description}</p>}
+            {title && <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>}
+            {description && <p className="text-xs text-zinc-400 mt-1 font-normal">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 p-1.5 rounded-xl hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="text-zinc-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
