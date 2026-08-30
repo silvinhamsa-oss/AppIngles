@@ -24,9 +24,11 @@
 - **Pronúncia em Áudio:** Ouça a pronúncia nativa de qualquer palavra ou frase com 1 clique.
 - **Classificação CEFR:** Cards organizados por níveis (A1, A2, B1, B2, C1, C2).
 
-### 4. 📱 Progressive Web App (PWA)
+### 4. 📱 Progressive Web App (PWA) & Mobile UX
 - **Instalação Nativa:** Instale no Android, iPhone/iPad (iOS) ou Computador (Windows/Mac) diretamente do navegador.
 - **Modo Standalone:** Abre sem a barra de navegação do browser, com ícones oficiais e tela cheia.
+- **Menu Inferior Mobile Adaptativo:** Barra inferior com 6 abas essenciais (*Início, Aprender, Conversar flutuante central, Vocab, Progresso e Ajustes*), suporte a safe-area de iPhones e micro-animações de toque.
+- **Modais e Chat com Rolagem Fluida:** Seletores de cenários e visualizador de mensagens otimizados com `100dvh` para telas de celulares.
 - **Service Worker & Cache Offline:** Carregamento instantâneo de assets estáticos e funcionamento offline para revisão.
 
 ---
