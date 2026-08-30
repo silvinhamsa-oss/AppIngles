@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0b14"/>
+      <stop offset="50%" stop-color="#141420"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#f59e0b" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background with rounded squircles -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-opacity="0.4"/>
+
+  <!-- Radial Glow behind emblem -->
+  <circle cx="256" cy="256" r="180" fill="url(#glowGrad)"/>
+
+  <!-- Sound Waves (Left & Right) -->
+  <g stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round" opacity="0.85">
+    <!-- Left Waves -->
+    <path d="M 170 216 Q 140 256 170 296" fill="none"/>
+    <path d="M 135 186 Q 95 256 135 326" fill="none" stroke-width="6" opacity="0.6"/>
+    <path d="M 100 156 Q 50 256 100 356" fill="none" stroke-width="4" opacity="0.35"/>
+
+    <!-- Right Waves -->
+    <path d="M 342 216 Q 372 256 342 296" fill="none"/>
+    <path d="M 377 186 Q 417 256 377 326" fill="none" stroke-width="6" opacity="0.6"/>
+    <path d="M 412 156 Q 462 256 412 356" fill="none" stroke-width="4" opacity="0.35"/>
+  </g>
+
+  <!-- Central Studio Microphone Emblem -->
+  <g filter="url(#shadow)">
+    <!-- Capsule -->
+    <rect x="220" y="140" width="72" height="130" rx="36" fill="url(#goldGrad)"/>
+    
+    <!-- Inner Capsule Mesh Line -->
+    <line x1="220" y1="205" x2="292" y2="205" stroke="#78350f" stroke-width="3" opacity="0.7"/>
+    <path d="M 235 170 L 277 170 M 235 185 L 277 185" stroke="#78350f" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Stand Cradle -->
+    <path d="M 200 230 C 200 300 312 300 312 230" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Base Stem -->
+    <line x1="256" y1="295" x2="256" y2="355" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Circular Base Plate -->
+    <ellipse cx="256" cy="365" rx="55" ry="14" fill="url(#goldGrad)"/>
+  </g>
+
+  <!-- Decorative Sparks / Stars -->
+  <polygon points="370,120 375,135 390,140 375,145 370,160 365,145 350,140 365,135" fill="#fde68a" opacity="0.8"/>
+  <polygon points="135,370 138,380 148,383 138,386 135,396 132,386 122,383 132,380" fill="#fde68a" opacity="0.7"/>
+</svg>

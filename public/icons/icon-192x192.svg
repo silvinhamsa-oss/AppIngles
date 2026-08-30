@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0b14"/>
+      <stop offset="50%" stop-color="#141420"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="192" height="192" rx="48" fill="url(#bgGrad)"/>
+  <rect width="188" height="188" x="2" y="2" rx="46" fill="none" stroke="url(#goldGrad)" stroke-width="2" stroke-opacity="0.4"/>
+  <circle cx="96" cy="96" r="70" fill="url(#glowGrad)"/>
+
+  <!-- Sound Waves -->
+  <g stroke="url(#goldGrad)" stroke-width="3" stroke-linecap="round" opacity="0.8">
+    <path d="M 64 81 Q 52 96 64 111" fill="none"/>
+    <path d="M 51 70 Q 36 96 51 122" fill="none" stroke-width="2.5" opacity="0.5"/>
+    <path d="M 128 81 Q 140 96 128 111" fill="none"/>
+    <path d="M 141 70 Q 156 96 141 122" fill="none" stroke-width="2.5" opacity="0.5"/>
+  </g>
+
+  <!-- Microphone Capsule -->
+  <rect x="82.5" y="52" width="27" height="50" rx="13.5" fill="url(#goldGrad)"/>
+  <line x1="82.5" y1="77" x2="109.5" y2="77" stroke="#78350f" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Stand Cradle -->
+  <path d="M 75 86 C 75 113 117 113 117 86" fill="none" stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="96" y1="111" x2="96" y2="134" stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="96" cy="138" rx="22" ry="6" fill="url(#goldGrad)"/>
+</svg>

@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
 
 const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -24,11 +25,30 @@ const newsreaderSerif = Newsreader({
   weight: ["400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#09090e",
+};
+
 export const metadata: Metadata = {
   title: "English Lab — Studio Voice & AI English Tutor",
-  description: "Tutor particular de inglês de alto padrão. Conversação imersiva, active recall e repetição espaçada.",
+  description: "Tutor particular de inglês de alto padrão. Conversação imersiva por voz, active recall e repetição espaçada.",
+  manifest: "/manifest.json",
+  applicationName: "English Lab",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "English Lab",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icons/icon-192x192.svg",
+    apple: "/icons/icon-192x192.svg",
   },
 };
 
@@ -45,6 +65,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#09090b] text-[#fafafa] font-sans selection:bg-amber-400 selection:text-zinc-950">
         {children}
+        <PwaRegister />
       </body>
     </html>
   );
