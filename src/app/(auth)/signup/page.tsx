@@ -35,7 +35,7 @@ export default function SignupPage() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -54,19 +54,38 @@ export default function SignupPage() {
         await registerBiometrics(email);
       }
 
-      setFeedback({
-        type: "success",
-        message: "Conta criada com sucesso! Redirecionando para o seu painel...",
-      });
-      router.push("/dashboard");
+      // Se o usuário foi criado e já autenticado diretamente
+      if (data.session) {
+        setFeedback({
+          type: "success",
+          message: "Conta criada com sucesso! Redirecionando para o seu painel...",
+        });
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1200);
+      } else if (data.user) {
+        // Se o Supabase exige confirmação de email
+        setFeedback({
+          type: "success",
+          message: "Conta criada com sucesso! Enviamos um e-mail de confirmação. Por favor, verifique sua caixa de entrada antes de entrar.",
+        });
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "";
       let friendlyMessage = errorMessage || "Erro ao criar conta. Tente novamente.";
+
       if (errorMessage.includes("User already registered")) {
         friendlyMessage = "Este e-mail já está cadastrado. Tente fazer login.";
       } else if (errorMessage.includes("Password should be at least 6 characters")) {
         friendlyMessage = "A senha deve ter no mínimo 6 caracteres.";
+      } else if (
+        errorMessage.includes("Database error saving new user") ||
+        errorMessage.includes("Database error")
+      ) {
+        friendlyMessage =
+          "Erro no banco de dados do Supabase ao registrar perfil. Execute o script 'supabase/fix_trigger.sql' no SQL Editor do Supabase para corrigir o trigger automático.";
       }
+
       setFeedback({
         type: "error",
         message: friendlyMessage,

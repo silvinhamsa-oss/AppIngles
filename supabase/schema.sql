@@ -129,8 +129,9 @@ ALTER TABLE public.conversation_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_lesson_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_biometric_credentials ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Users can only read and update their own profile
+-- Profiles: Users can only read, insert and update their own profile
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Vocabulary: Users can only manage their own vocabulary
@@ -150,26 +151,72 @@ CREATE POLICY "Users can view own evaluations" ON public.conversation_evaluation
 CREATE POLICY "Users can manage own lesson progress" ON public.user_lesson_progress FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own biometric credentials" ON public.user_biometric_credentials FOR ALL USING (auth.uid() = user_id);
 
+-- Grants
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+
 -- ==============================================================================
--- AUTOMATIC PROFILE CREATION TRIGGER ON SIGNUP
+-- AUTOMATIC PROFILE CREATION TRIGGER ON SIGNUP (RESILIENT)
 -- ==============================================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_level public.cefr_level := 'B1+';
+  v_raw_level text;
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, avatar_url, cefr_level, xp_points)
+  -- Safe parsing of cefr_level
+  BEGIN
+    v_raw_level := NEW.raw_user_meta_data->>'cefr_level';
+    IF v_raw_level IN ('A1', 'A2', 'B1', 'B1+', 'B2', 'C1', 'C2') THEN
+      v_level := v_raw_level::public.cefr_level;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    v_level := 'B1+';
+  END;
+
+  INSERT INTO public.profiles (
+    id,
+    email,
+    full_name,
+    avatar_url,
+    cefr_level,
+    target_level,
+    daily_goal_minutes,
+    streak_days,
+    xp_points
+  )
   VALUES (
     NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
+    COALESCE(NEW.email, ''),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(COALESCE(NEW.email, 'user'), '@', 1)),
     NEW.raw_user_meta_data->>'avatar_url',
-    COALESCE((NEW.raw_user_meta_data->>'cefr_level')::cefr_level, 'B1+'),
+    v_level,
+    'B2',
+    20,
+    1,
     100
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+    updated_at = NOW();
+
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Prevent aborting auth.users creation if profile insertion fails
+  RAISE WARNING 'handle_new_user exception for user %: %', NEW.id, SQLERRM;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
