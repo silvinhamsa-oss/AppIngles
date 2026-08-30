@@ -62,8 +62,30 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${jakartaSans.variable} ${jetbrainsMono.variable} ${newsreaderSerif.variable} h-full antialiased`}
       data-theme="dark"
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#09090b] text-[#fafafa] font-sans selection:bg-amber-400 selection:text-zinc-950">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('english-lab-theme') || 'dark';
+                  document.documentElement.setAttribute('data-theme', saved);
+                  if (saved === 'light') {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans transition-colors duration-200 selection:bg-amber-400 selection:text-zinc-950">
         {children}
         <PwaRegister />
       </body>

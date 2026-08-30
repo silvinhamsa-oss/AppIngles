@@ -5,10 +5,20 @@ import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const savedTheme = (localStorage.getItem("english-lab-theme") as "dark" | "light" | null) || "dark";
+    setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
+    if (savedTheme === "light") {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -16,13 +26,27 @@ export function ThemeToggle() {
     setTheme(nextTheme);
     localStorage.setItem("english-lab-theme", nextTheme);
     document.documentElement.setAttribute("data-theme", nextTheme);
+    if (nextTheme === "light") {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    }
   };
+
+  if (!mounted) {
+    return (
+      <div className="w-8 h-8 rounded-xl bg-[#121218] border border-white/10 shrink-0" />
+    );
+  }
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-100 hover:border-slate-700 transition-all cursor-pointer shadow-sm"
-      title={`Mudar para modo ${theme === "dark" ? "claro" : "escuro"}`}
+      type="button"
+      className="w-8 h-8 rounded-xl bg-[#121218] border border-white/10 hover:border-amber-400/40 text-amber-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer shadow-sm shrink-0 active:scale-90"
+      title={`Alternar para modo ${theme === "dark" ? "claro" : "escuro"}`}
     >
       {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
     </button>
