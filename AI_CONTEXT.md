@@ -67,17 +67,27 @@ Qualquer alteração ou novo componente criado DEVE seguir rigorosamente a ident
 | :--- | :--- |
 | `/` | Landing page com visualizador de áudio, recursos e CTA. |
 | `/login` | Login mobile-first com biometria (Face ID/Touch ID) e e-mail. |
-| `/signup` | Cadastro de novo aluno com seleção de nível CEFR inicial (A1 a B2). |
-| `/dashboard` | Painel do aluno: Missão do dia (10m-45m), Streak de 7 dias, Living Voice Orb e Radar. |
-| `/learn` | Trilha estruturada de aulas (A1 ao C2) + Simulador de Certificação (IELTS/TOEFL). |
-| `/talk` | Laboratório de conversação com Sarah UK e Marcus US, 6 cenários e relatório pós-sessão. |
-| `/vocabulary` | Banco de vocabulário ativo com busca, filtros por CEFR e Flashcards 3D (SM-2). |
-| `/progress` | Diagnóstico de 6 competências (Radar) e Listening Lab com Ditado Diff. |
-| `/settings` | Configurações de IA desacoplada, teste de conexão, áudio e perfil. |
+| `/signup` | Cadastro de novo aluno com redirect para o Onboarding com Teste de Nivelamento. |
+| `/test` | Teste de nivelamento CEFR em 3 minutos (quiz de gramática + 30s de fala) com persistência Supabase. |
+| `/dashboard` | Painel do aluno: Desafio Diário (XP bônus), Missão do dia (10m-45m), Streak de 7 dias, Living Voice Orb e Radar. |
+| `/learn` | Trilha estruturada de aulas (A1 ao C2) + Laboratório de Escrita Ativa + Simulador de Certificação (IELTS/TOEFL). |
+| `/talk` | Laboratório de conversação: Sarah (UK) e Marcus (US), Modo Focus, Criador de Cenários Customizados, Dicionário de Toque, Pronúncia Fonética IPA e Exportação da conversa em Markdown. |
+| `/vocabulary` | Banco de vocabulário e frases ativas: Decks segmentados (`Todos`, `🔤 Palavras`, `🗣️ Frases & Idioms`), busca, filtros por CEFR e Flashcards 3D (SM-2). |
+| `/progress` | Diagnóstico das 6 competências (Radar), Listening Lab (Ditado Diff), Laboratório de Escrita e Quiz Adaptativo dos Pontos Fracos (+50 XP). |
+| `/settings` | Configurações de IA desacoplada, teste de conexão, seleção de vozes nativas, biometria WebAuthn, backup completo em JSON e Emissão de Certificado Oficial CEFR com impressão/PDF. |
 
 ---
 
-## 5. Regras para Novas Edições de Código
+## 5. Recursos & Padrões Globais Adicionados
+
+* **🔍 Busca Global / Command Palette (`Cmd + K`):** Localizador universal acionável por atalho ou botão de lupa no Header.
+* **⚡ Atalhos de Teclado de Navegação Global (`GlobalKeyboardShortcuts.tsx`):** Teclas `T`, `V`, `L`, `P`, `S`, `D` para transição imediata de telas fora de formulários.
+* **🛡️ Blindagem de Rotas (`global-error.tsx` e `(dashboard)/error.tsx`):** Error boundaries amigáveis impedindo telas brancas.
+* **♿ Acessibilidade em 3 Níveis (`ThemeToggle.tsx`):** Modos `Dark`, `Light` e `High Contrast` (`[data-theme="contrast"]`).
+
+---
+
+## 6. Regras para Novas Edições de Código
 
 1. **Nunca quebre o TypeScript (`npm run build` deve sempre sair com código 0).**
 2. **Nunca reintroduza fundos cinzas claros ou o estilo genérico de dashboard administrativo.**

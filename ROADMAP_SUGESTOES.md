@@ -200,16 +200,18 @@ AIRouter atual → Pipeline:
 
 ---
 
-## 10. Qualidade de Vida (Quick Wins — 1 dia cada)
+## 10. Qualidade de Vida & Fluência Ativa — ✅ 100% IMPLEMENTADOS
 
-| Feature | Esforço | Valor | Arquivos |
-|---------|---------|-------|----------|
-| Tema "High Contrast" / Dislexia-friendly | 🟢 Baixo | ♿ Acessibilidade | `globals.css`, `ThemeToggle.tsx` |
-| Atalhos globais (T=Talk, V=Vocab, L=Learn, P=Progress, S=Settings) | 🟢 Baixo | ⚡ Power users | `src/app/(dashboard)/layout.tsx` (keydown listener) |
-| Modo "Focus" (oculta UI, só chat + timer) | 🟢 Baixo | 🧘 Imersão | `talk/page.tsx` (state `focusMode`) |
-| Exportar conversa (PDF/Markdown) | 🟢 Baixo | 📄 Revisão offline | `talk/page.tsx`, `jspdf` ou server route |
-| Dicionário inline no chat (clique palavra → def + add SRS) | 🟡 Médio | 📚 Vocab contextual | `talk/page.tsx` (popover), `src/lib/dictionary.ts` |
-| Revisão espaçada de FRASES (não só palavras) | 🟡 Médio | 🗣️ Fluência | `src/lib/srs.ts` (estender), novo tipo `phrase` |
+| Feature | Esforço | Valor | Status | Arquivos |
+|---------|---------|-------|:------:|----------|
+| **Tema "High Contrast" (Acessibilidade)** | 🟢 Baixo | ♿ Acessibilidade | ✅ Concluído | `globals.css`, `ThemeToggle.tsx` |
+| **Atalhos Globais (T, V, L, P, S, D)** | 🟢 Baixo | ⚡ Power users | ✅ Concluído | `GlobalKeyboardShortcuts.tsx`, `layout.tsx` |
+| **Modo "Focus" (Imersão Total)** | 🟢 Baixo | 🧘 Imersão | ✅ Concluído | `talk/page.tsx` (state `isFocusMode`) |
+| **Exportar Conversa (Markdown .MD)** | 🟢 Baixo | 📄 Revisão offline | ✅ Concluído | `talk/page.tsx` (`handleExportChatHistory`) |
+| **Criador de Cenários Customizados** | 🟡 Médio | 🎭 Personalização | ✅ Concluído | `CustomScenarioModal.tsx`, `talk/page.tsx` |
+| **Dicionário Contextual de Toque** | 🟡 Médio | 📚 Vocab no chat | ✅ Concluído | `WordLookupModal.tsx`, `talk/page.tsx` |
+| **Revisão Espaçada de FRASES & Chunks** | 🟡 Médio | 🗣️ Fluência ativa | ✅ Concluído | `src/lib/vocabulary-data.ts`, `vocabulary/page.tsx` |
+| **Quiz Adaptativo de Pontos Fracos** | 🟡 Médio | 🧠 Reforço de lacunas | ✅ Concluído | `WeaknessQuizModal.tsx`, `progress/page.tsx` |
 
 ---
 
