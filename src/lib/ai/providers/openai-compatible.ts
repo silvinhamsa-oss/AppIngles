@@ -101,9 +101,13 @@ export class OpenAICompatibleProvider implements AIProvider {
         }
 
         const errorText = await response.text();
-        if (response.status === 410 || response.status === 404) {
-          // Tenta o próximo modelo do loop caso disponível
-          lastError = new Error(`O modelo '${currentModel}' não está disponível na NVIDIA (${response.status}).`);
+        if (response.status === 410 || response.status === 404 || response.status === 429) {
+          // Tenta o próximo modelo do loop caso disponível (404/410: modelo indisponível, 429: limite de taxa)
+          if (response.status === 429) {
+            lastError = new Error(`Limite de taxa excedido para o modelo '${currentModel}'. Tentando próximo modelo...`);
+          } else {
+            lastError = new Error(`O modelo '${currentModel}' não está disponível na NVIDIA (${response.status}).`);
+          }
           continue;
         } else {
           throw new Error(`AI Provider Error (${response.status}): ${errorText}`);
@@ -172,8 +176,12 @@ export class OpenAICompatibleProvider implements AIProvider {
         }
 
         const errorText = await response.text();
-        if (response.status === 410 || response.status === 404) {
-          lastErrorMsg = `O modelo '${currentModel}' não está disponível na sua conta NVIDIA (${response.status}).`;
+        if (response.status === 410 || response.status === 404 || response.status === 429) {
+          if (response.status === 429) {
+            lastErrorMsg = `Limite de taxa excedido para o modelo '${currentModel}'. Tentando próximo modelo...`;
+          } else {
+            lastErrorMsg = `O modelo '${currentModel}' não está disponível na sua conta NVIDIA (${response.status}).`;
+          }
           continue;
         } else {
           throw new Error(`AI Streaming Error (${response.status}): ${errorText}`);

@@ -253,12 +253,27 @@ export default function TalkPage() {
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         const errorMsg = errData.error || errData.message || `Erro do servidor (${res.status}).`;
+
+        // Provide more specific guidance based on HTTP status code
+        let specificGuidance = "";
+        if (res.status === 401) {
+          specificGuidance = "\n\n🔑 Sua chave de API pode estar inválida ou expirada. Verifique-a em Configurações > Provedor de IA.";
+        } else if (res.status === 402) {
+          specificGuidance = "\n\n💳 Créditos esgotados. Verifique seu plano e limites de uso no provedor de IA.";
+        } else if (res.status === 429) {
+          specificGuidance = "\n\n⏱️ Limite de taxa excedido. Aguarde alguns minutos antes de tentar novamente ou considere atualizar seu plano.";
+        } else if (res.status >= 500 && res.status < 600) {
+          specificGuidance = "\n\n🌐 Problema temporário no servidor do provedor. Tente novamente em instantes.";
+        } else {
+          specificGuidance = "\n\n👉 Acesse o menu Configurações para validar sua chave de API e modelo.";
+        }
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === aiMsgId
               ? {
                   ...msg,
-                  content: `⚠️ Não foi possível obter resposta da IA: ${errorMsg}\n\n👉 Acesse o menu Configurações para validar sua chave de API e modelo.`,
+                  content: `⚠️ Não foi possível obter resposta da IA: ${errorMsg}${specificGuidance}`,
                 }
               : msg
           )
@@ -319,12 +334,28 @@ export default function TalkPage() {
     } catch (err: unknown) {
       console.error("AI response error:", err);
       const errorMsg = err instanceof Error ? err.message : "Erro desconhecido de conexão com a IA.";
+
+      // Provide more specific guidance based on error message patterns
+      let specificGuidance = "";
+      const lowerErrorMsg = errorMsg.toLowerCase();
+      if (lowerErrorMsg.includes("401") || lowerErrorMsg.includes("unauthorized") || lowerErrorMsg.includes("invalid api key")) {
+        specificGuidance = "\n\n🔑 Sua chave de API pode estar inválida ou expirada. Verifique-a em Configurações > Provedor de IA.";
+      } else if (lowerErrorMsg.includes("402") || lowerErrorMsg.includes("payment required") || lowerErrorMsg.includes("credits")) {
+        specificGuidance = "\n\n💳 Créditos esgotados. Verifique seu plano e limites de uso no provedor de IA.";
+      } else if (lowerErrorMsg.includes("429") || lowerErrorMsg.includes("rate limit") || lowerErrorMsg.includes("quota")) {
+        specificGuidance = "\n\n⏱️ Limite de taxa excedido. Aguarde alguns minutos antes de tentar novamente ou considere atualizar seu plano.";
+      } else if (lowerErrorMsg.includes("500") || lowerErrorMsg.includes("502") || lowerErrorMsg.includes("503") || lowerErrorMsg.includes("504")) {
+        specificGuidance = "\n\n🌐 Problema temporário no servidor do provedor. Tente novamente em instantes.";
+      } else {
+        specificGuidance = "\n\n👉 Vá em Configurações > Provedor de IA e teste sua conexão.";
+      }
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === aiMsgId
             ? {
                 ...msg,
-                content: `⚠️ Falha ao se comunicar com o provedor de IA: ${errorMsg}\n\n👉 Vá em Configurações > Provedor de IA e teste sua conexão.`,
+                content: `⚠️ Falha ao se comunicar com o provedor de IA: ${errorMsg}${specificGuidance}`,
               }
             : msg
         )
