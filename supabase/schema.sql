@@ -26,6 +26,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   xp_points INT DEFAULT 0,
   biometrics_enabled BOOLEAN DEFAULT FALSE,
   preferred_persona TEXT DEFAULT 'sarah',
+  ai_provider TEXT DEFAULT 'openrouter',
+  ai_api_key TEXT,
+  ai_model TEXT DEFAULT 'meta-llama/llama-3.3-70b-instruct',
+  ai_base_url TEXT,
+  ai_temperature NUMERIC DEFAULT 0.7,
+  ai_max_tokens INT DEFAULT 2048,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

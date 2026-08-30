@@ -25,7 +25,12 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
-## 🤖 3. Pipeline de Inteligência Artificial
+## 🤖 3. Pipeline de Inteligência Artificial & Persistência na Nuvem
+* **Provedores Suportados no AI Router:** OpenRouter, NVIDIA NIM, OpenAI, Google Gemini, Anthropic, Ollama Local e Provedores Customizados compatíveis com OpenAI.
+* **NVIDIA NIM:** Totalmente integrado com endpoint padrão `https://integrate.api.nvidia.com/v1` e suporte nativo a `meta/llama-3.3-70b-instruct`, `nvidia/llama-3.1-nemotron-70b-instruct`, etc.
+* **Persistência de API Keys na Nuvem:**
+  - As chaves de API e preferências de IA são salvas e persistidas na tabela `public.profiles` do Supabase (`ai_provider`, `ai_api_key`, `ai_model`, `ai_base_url`, `ai_temperature`, `ai_max_tokens`).
+  - Sincronização bidirecional: ao abrir o app em qualquer dispositivo ou após um novo deploy no Vercel/VPS, o app recupera automaticamente as credenciais do usuário do Supabase sem que ele perca suas chaves.
 * **Rotas de API:**
   - `POST /api/ai/chat`: Streaming SSE de conversação com cenários e personas.
   - `POST /api/ai/evaluate`: Avaliação pedagógica automática com pontuação CEFR (fluência, vocabulário, gramática, naturalidade e correções).
@@ -38,4 +43,5 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita sem uso de `any`.
 * **Build:** 16 páginas compiladas com Turbopack (Código de saída: 0).
+
 

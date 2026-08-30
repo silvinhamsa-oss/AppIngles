@@ -61,7 +61,7 @@ export default function SettingsPage() {
   const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
 
   useEffect(() => {
-    async function loadUserProfile() {
+    async function loadUserProfileAndAIConfig() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -84,15 +84,82 @@ export default function SettingsPage() {
             if (profile.email) setEmail(profile.email);
             if (profile.cefr_level) setCefrLevel(profile.cefr_level as CEFRLevel);
             if (profile.daily_goal_minutes) setDailyGoalMinutes(profile.daily_goal_minutes);
+
+            // Carrega chaves e configurações de IA salvas na nuvem (Supabase)
+            if (profile.ai_provider) setProvider(profile.ai_provider as AIProviderType);
+            if (profile.ai_api_key) setApiKey(profile.ai_api_key);
+            if (profile.ai_model) setModel(profile.ai_model);
+            if (profile.ai_base_url) setBaseUrl(profile.ai_base_url);
+            if (profile.ai_temperature !== undefined && profile.ai_temperature !== null) {
+              setTemperature(Number(profile.ai_temperature));
+            }
+            if (profile.ai_max_tokens) setMaxTokens(profile.ai_max_tokens);
+
+            // Sincroniza também no cache local
+            if (profile.ai_provider || profile.ai_api_key) {
+              localStorage.setItem(
+                "english-lab-ai-config",
+                JSON.stringify({
+                  provider: profile.ai_provider || "openrouter",
+                  apiKey: profile.ai_api_key || "",
+                  model: profile.ai_model || "meta-llama/llama-3.3-70b-instruct",
+                  baseUrl: profile.ai_base_url || "",
+                  temperature: Number(profile.ai_temperature) || 0.7,
+                  maxTokens: profile.ai_max_tokens || 2048,
+                })
+              );
+            }
           }
         }
       } catch (err) {
-        console.error("Error loading user profile in settings:", err);
+        console.error("Error loading user profile & AI config in settings:", err);
       }
     }
 
-    loadUserProfile();
+    loadUserProfileAndAIConfig();
   }, []);
+
+  const handleProviderChange = (newProvider: AIProviderType) => {
+    setProvider(newProvider);
+    if (newProvider === "nvidia") {
+      setModel("meta/llama-3.3-70b-instruct");
+      setBaseUrl("https://integrate.api.nvidia.com/v1");
+    } else if (newProvider === "openrouter") {
+      setModel("meta-llama/llama-3.3-70b-instruct");
+      setBaseUrl("");
+    } else if (newProvider === "openai") {
+      setModel("gpt-4o-mini");
+      setBaseUrl("");
+    } else if (newProvider === "gemini") {
+      setModel("gemini-2.0-flash");
+      setBaseUrl("");
+    } else if (newProvider === "anthropic") {
+      setModel("claude-3-5-sonnet-20241022");
+      setBaseUrl("");
+    } else if (newProvider === "ollama") {
+      setModel("llama3.2");
+      setBaseUrl("http://localhost:11434/v1");
+    }
+  };
+
+  const getApiKeyPlaceholder = () => {
+    switch (provider) {
+      case "nvidia":
+        return "Cole sua chave NVIDIA (nvapi-...)";
+      case "openrouter":
+        return "Cole sua chave OpenRouter (sk-or-v1-...)";
+      case "openai":
+        return "Cole sua chave OpenAI (sk-proj-...)";
+      case "gemini":
+        return "Cole sua chave Google Gemini (AIzaSy...)";
+      case "anthropic":
+        return "Cole sua chave Anthropic (sk-ant-...)";
+      case "ollama":
+        return "Opcional para servidor Ollama Local";
+      default:
+        return "Cole sua chave de API (sk-...)";
+    }
+  };
 
   const handleTestConnection = async () => {
     setTestStatus("testing");
@@ -125,7 +192,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveAIConfig = (e: React.FormEvent) => {
+  const handleSaveAIConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     const config = {
       provider,
@@ -135,9 +202,35 @@ export default function SettingsPage() {
       temperature,
       maxTokens,
     };
+
+    // 1. Salva no cache local (navegador)
     localStorage.setItem("english-lab-ai-config", JSON.stringify(config));
+
+    // 2. Salva na nuvem (Supabase) para persistir mesmo após novos deploys
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .upsert({
+            id: user.id,
+            email: user.email,
+            ai_provider: provider,
+            ai_api_key: apiKey,
+            ai_model: model,
+            ai_base_url: baseUrl,
+            ai_temperature: temperature,
+            ai_max_tokens: maxTokens,
+            updated_at: new Date().toISOString(),
+          });
+      }
+    } catch (err) {
+      console.warn("Could not persist AI config to Supabase profiles:", err);
+    }
+
     setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setTimeout(() => setSaveSuccess(false), 3500);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -236,7 +329,7 @@ export default function SettingsPage() {
             <div>
               <h2 className="text-lg font-bold text-white">Camada de IA Desacoplada (AI Router)</h2>
               <p className="text-xs text-[var(--text-muted)] mt-0.5 font-normal">
-                Conecte seu provedor de preferência com segurança. As chaves são armazenadas localmente no seu dispositivo.
+                Conecte seu provedor de preferência com segurança. As chaves são salvas no seu banco Supabase e no dispositivo para não se perderem em novos deploys.
               </p>
             </div>
           </div>
@@ -249,11 +342,11 @@ export default function SettingsPage() {
               </label>
               <select
                 value={provider}
-                onChange={(e) => setProvider(e.target.value as AIProviderType)}
+                onChange={(e) => handleProviderChange(e.target.value as AIProviderType)}
                 className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
               >
                 <option value="openrouter">OpenRouter (Mais de 100 modelos — Recomendado)</option>
-                <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron)</option>
+                <option value="nvidia">NVIDIA NIM (Llama 3.3 70B, Nemotron, Mistral)</option>
                 <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
                 <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
                 <option value="anthropic">Anthropic (Claude 3.5 Sonnet / Haiku)</option>
@@ -266,10 +359,10 @@ export default function SettingsPage() {
             <Input
               label="Chave de API (API Key)"
               type="password"
-              placeholder={provider === "ollama" ? "Opcional para Ollama" : "Cole sua chave (sk-...)"}
+              placeholder={getApiKeyPlaceholder()}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              helperText="Armazenada de forma segura. O AI Router protege suas credenciais."
+              helperText="Persistida de forma segura no Supabase e no cache local do seu navegador."
             />
 
             {/* Model Name */}

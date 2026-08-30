@@ -18,6 +18,7 @@ import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk/TopicSelector";
 import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
+import { createClient } from "@/lib/supabase/client";
 import confetti from "canvas-confetti";
 
 interface MessageItem {
@@ -59,6 +60,43 @@ export default function TalkPage() {
       timestamp: "14:20",
     },
   ]);
+
+  // Sync AI configuration from Supabase if not present in local cache
+  useEffect(() => {
+    async function syncCloudAIConfig() {
+      try {
+        const local = localStorage.getItem("english-lab-ai-config");
+        if (!local) {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("ai_provider, ai_api_key, ai_model, ai_base_url, ai_temperature, ai_max_tokens")
+              .eq("id", user.id)
+              .single();
+
+            if (profile && (profile.ai_provider || profile.ai_api_key)) {
+              localStorage.setItem(
+                "english-lab-ai-config",
+                JSON.stringify({
+                  provider: profile.ai_provider || "openrouter",
+                  apiKey: profile.ai_api_key || "",
+                  model: profile.ai_model || "meta-llama/llama-3.3-70b-instruct",
+                  baseUrl: profile.ai_base_url || "",
+                  temperature: Number(profile.ai_temperature) || 0.7,
+                  maxTokens: profile.ai_max_tokens || 2048,
+                })
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not sync cloud AI config in TalkPage:", err);
+      }
+    }
+    syncCloudAIConfig();
+  }, []);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
