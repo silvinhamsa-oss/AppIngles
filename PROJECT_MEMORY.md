@@ -57,7 +57,17 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
-## 🧹 6. Qualidade de Código & Verificação
+---
+
+## 📱 7. Experiência Mobile & Responsividade (UI/UX)
+* **Barra de Navegação Inferior (`BottomNav.tsx`):** Inclui 6 abas essenciais (*Início, Aprender, Conversar [Destaque Flutuante Central], Vocab, Progresso e Ajustes*), com suporte a safe area (`pb-safe`), micro-animações de toque (`active:scale-95`) e indicador ativo sob o ícone.
+* **Modal de Tópicos e Projetos (`TopicSelector.tsx`):** Grid responsivo em coluna única/dupla com limitação de altura (`max-h-[85dvh]`) e rolagem vertical suave (`overflow-y-auto`), evitando qualquer estouro de cards em celulares.
+* **View Height Dinâmico (`100dvh`):** O chat de conversação com áudio (`/talk`) utiliza `h-[calc(100dvh-8rem)]` para não ser comprimido ou cortado pelas barras de endereços móveis (Safari iOS e Chrome Android).
+
+---
+
+## 🧹 8. Qualidade de Código & Verificação
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita.
 * **Build Next.js (Turbopack):** 18 rotas compiladas com sucesso (100% de cobertura).
+
