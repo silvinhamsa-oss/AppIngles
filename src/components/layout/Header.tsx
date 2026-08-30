@@ -71,34 +71,34 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 w-full bg-[#07070a]/90 backdrop-blur-lg border-b border-white/10 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
-      {/* Brand mobile */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+      {/* Brand mobile & Level Indicator */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2 group shrink-0" title="Ir para o Início">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-md shadow-amber-500/20 font-black text-zinc-950 text-xs tracking-wider group-hover:scale-105 transition-transform">
             EL
           </div>
-          <span className="font-extrabold text-sm sm:text-base text-white tracking-tight block sm:hidden">
-            English<span className="text-amber-400">Lab</span>
-          </span>
         </Link>
 
         {/* Level Indicator Pill */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#121218] border border-white/10 text-amber-300 text-[11px] sm:text-xs font-mono font-bold shrink-0">
+        <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#121218] border border-white/10 text-amber-300 text-xs font-mono font-bold shrink-0">
           <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
           <span>{currentLevel}</span>
         </div>
       </div>
 
       {/* Stats & Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Streak Flame */}
-        <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-bold font-mono shrink-0">
+        <div
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold font-mono shrink-0"
+          title={`${streakDays} dias de ofensiva`}
+        >
           <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-          <span>{streakDays} <span className="hidden xs:inline sm:inline font-normal text-amber-400/70">dias</span></span>
+          <span>{streakDays} <span className="hidden xs:inline font-normal text-amber-400/70">dias</span></span>
         </div>
 
-        {/* XP Points */}
-        <div className="hidden xs:flex sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#121218] border border-white/10 text-white text-[11px] sm:text-xs font-bold font-mono">
+        {/* XP Points - Hidden on tiny mobile to save breathing room, visible on sm: screens */}
+        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#121218] border border-white/10 text-white text-xs font-bold font-mono">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           <span>{xpPoints} XP</span>
         </div>
@@ -108,7 +108,7 @@ export function Header({
         {/* Settings Gear Button */}
         <Link
           href="/settings"
-          className={`p-1.5 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
+          className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
             pathname.startsWith("/settings")
               ? "bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-400/30"
               : "bg-[#121218] hover:bg-white/10 text-zinc-400 hover:text-white border-white/10"
@@ -121,19 +121,19 @@ export function Header({
         {/* User avatar / profile link */}
         <Link
           href="/settings?tab=profile"
-          className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#121218] hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
+          className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-xl bg-[#121218] hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
           title="Ver Perfil"
         >
-          <div className="w-5 h-5 rounded-md bg-amber-500 text-zinc-950 flex items-center justify-center text-[10px] font-black">
+          <div className="w-6 h-6 rounded-lg bg-amber-500 text-zinc-950 flex items-center justify-center text-[11px] font-black">
             {userName.charAt(0).toUpperCase()}
           </div>
-          <span className="hidden md:inline font-medium text-white/90">{userName}</span>
+          <span className="hidden md:inline font-medium text-white/90 text-xs">{userName}</span>
         </Link>
 
         {/* Mobile quick logout */}
         <button
           onClick={handleLogout}
-          className="p-1.5 rounded-xl bg-[#121218] hover:bg-red-500/20 text-zinc-400 hover:text-red-300 border border-white/10 transition-all cursor-pointer block lg:hidden"
+          className="w-8 h-8 rounded-xl bg-[#121218] hover:bg-red-500/20 text-zinc-400 hover:text-red-300 border border-white/10 transition-all flex items-center justify-center cursor-pointer block lg:hidden"
           title="Sair da Conta"
         >
           <LogOut className="w-4 h-4" />
