@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { DictationPlayer } from "@/components/listening/DictationPlayer";
 import { WritingModal } from "@/components/learn/WritingModal";
+import { WeaknessQuizModal } from "@/components/progress/WeaknessQuizModal";
 import { SkillRadarData, CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export default function ProgressPage() {
     if (typeof window === "undefined") return "overview";
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab");
-    return tabParam && ["overview", "listening", "history"].includes(tabParam) ? tabParam : "overview";
+    return tabParam && ["overview", "listening", "writing", "quiz", "history"].includes(tabParam) ? tabParam : "overview";
   });
   const [userLevel, setUserLevel] = useState<CEFRLevel>("B1+");
   const [totalXp, setTotalXp] = useState(1240);
@@ -41,6 +42,7 @@ export default function ProgressPage() {
   });
 
   const [isWritingModalOpen, setIsWritingModalOpen] = useState(false);
+  const [isWeaknessQuizOpen, setIsWeaknessQuizOpen] = useState(false);
 
   useEffect(() => {
     async function loadProgressData() {
@@ -109,6 +111,7 @@ export default function ProgressPage() {
       <Tabs
         tabs={[
           { id: "overview", label: "Visão Geral & Radar", icon: <TrendingUp className="w-4 h-4" /> },
+          { id: "quiz", label: "Quiz dos Pontos Fracos", icon: <Zap className="w-4 h-4" /> },
           { id: "listening", label: "Laboratório de Escuta & Ditado", icon: <Headphones className="w-4 h-4" /> },
           { id: "writing", label: "Laboratório de Escrita (Writing)", icon: <PenTool className="w-4 h-4" /> },
           { id: "history", label: "Histórico de Sessões", icon: <Calendar className="w-4 h-4" /> },
@@ -246,6 +249,35 @@ export default function ProgressPage() {
         </div>
       )}
 
+      {activeTab === "quiz" && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-2xl space-y-6 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-400/40 mx-auto flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/20">
+            <Zap className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase">
+              TREINO ADAPTATIVO POR IA
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white">Quiz de Reforço das Suas Lacunas</h3>
+            <p className="text-xs text-zinc-300 max-w-lg mx-auto font-normal">
+              A IA cruza suas menores pontuações no Radar e gera exercícios sob medida com foco em <strong>Phrasal Verbs, Conectivos e Regência Preposicional</strong>.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-center">
+            <Button
+              variant="gold"
+              onClick={() => setIsWeaknessQuizOpen(true)}
+              className="px-8 py-3.5 text-xs font-bold shadow-lg shadow-amber-500/20"
+            >
+              <Zap className="w-4 h-4 mr-1.5 fill-zinc-950" />
+              <span>Iniciar Quiz de Pontos Fracos (+50 XP)</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {activeTab === "history" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-4 text-center">
           <Calendar className="w-10 h-10 text-amber-400 mx-auto" />
@@ -261,6 +293,13 @@ export default function ProgressPage() {
         isOpen={isWritingModalOpen}
         onClose={() => setIsWritingModalOpen(false)}
         initialLevel={userLevel}
+      />
+
+      {/* Weakness Quiz Modal */}
+      <WeaknessQuizModal
+        isOpen={isWeaknessQuizOpen}
+        onClose={() => setIsWeaknessQuizOpen(false)}
+        onRewardXp={(xp) => setTotalXp((prev) => prev + xp)}
       />
     </div>
   );

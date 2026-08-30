@@ -2,6 +2,7 @@ import React from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { GlobalKeyboardShortcuts } from "@/components/layout/GlobalKeyboardShortcuts";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +11,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen flex bg-[#050507] text-[#fafafa] studio-mesh">
+      <GlobalKeyboardShortcuts />
       {/* Desktop Sidebar */}
       <Sidebar />
 

@@ -40,6 +40,7 @@ export default function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [deckMode, setDeckMode] = useState<"ALL" | "WORDS" | "PHRASES">("ALL");
 
   // Modals
   const [isFlashcardOpen, setIsFlashcardOpen] = useState(false);
@@ -123,7 +124,22 @@ export default function VocabularyPage() {
     }
   };
 
+  const wordsCount = items.filter(
+    (i) => i.partOfSpeech !== "idiom" && !i.word.trim().includes(" ")
+  ).length;
+  const phrasesCount = items.filter(
+    (i) => i.partOfSpeech === "idiom" || i.partOfSpeech === "phrasal_verb" || i.word.trim().includes(" ")
+  ).length;
+
   const filteredItems = items.filter((item) => {
+    const isPhrase =
+      item.partOfSpeech === "idiom" ||
+      item.partOfSpeech === "phrasal_verb" ||
+      item.word.trim().includes(" ");
+
+    if (deckMode === "WORDS" && isPhrase) return false;
+    if (deckMode === "PHRASES" && !isPhrase) return false;
+
     const matchesSearch =
       item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.translationPt.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,7 +155,7 @@ export default function VocabularyPage() {
   });
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -148,7 +164,7 @@ export default function VocabularyPage() {
             <span>MOTOR SRS (SPACED REPETITION)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2">
-            Banco de Vocabulário Ativo
+            Banco de Vocabulário & Frases Ativas
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-1 font-normal">
             Treine sua memória de longo prazo com o algoritmo SuperMemo-2 (SM-2) e elimine a tradução mental.
@@ -162,7 +178,7 @@ export default function VocabularyPage() {
             className="flex items-center gap-1.5 text-xs font-bold"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
-            <span>Adicionar Palavra</span>
+            <span>Adicionar Termo</span>
           </Button>
 
           <Button
@@ -171,9 +187,46 @@ export default function VocabularyPage() {
             className="flex items-center gap-2 text-xs font-black shadow-lg shadow-amber-500/20"
           >
             <Play className="w-4 h-4 fill-zinc-950" />
-            <span>Praticar Flashcards 3D ({items.length})</span>
+            <span>Praticar Flashcards ({filteredItems.length})</span>
           </Button>
         </div>
+      </div>
+
+      {/* Deck Mode Selector (Tabs) */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#0d0d14] border border-white/10 w-fit">
+        <button
+          type="button"
+          onClick={() => setDeckMode("ALL")}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            deckMode === "ALL"
+              ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20 font-black"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          Todos ({items.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setDeckMode("WORDS")}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            deckMode === "WORDS"
+              ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20 font-black"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          🔤 Palavras ({wordsCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setDeckMode("PHRASES")}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            deckMode === "PHRASES"
+              ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20 font-black"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          🗣️ Frases ({phrasesCount})
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -182,7 +235,7 @@ export default function VocabularyPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Buscar por palavra, tradução ou significado..."
+            placeholder="Buscar por termo, tradução ou contexto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#14141e] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
@@ -287,7 +340,7 @@ export default function VocabularyPage() {
       <FlashcardModal
         isOpen={isFlashcardOpen}
         onClose={() => setIsFlashcardOpen(false)}
-        items={items}
+        items={filteredItems.length > 0 ? filteredItems : items}
       />
 
       <AddWordModal

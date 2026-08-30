@@ -10,6 +10,12 @@
 | Módulo | Status | Arquivos-chave |
 |--------|--------|----------------|
 | **Conversação por Voz (/talk)** | ✅ Completo | `src/app/(dashboard)/talk/page.tsx`, `src/lib/audio.ts` |
+| **Modo Focus & Exportar Conversa** | ✅ **IMPLEMENTADO** | `src/app/(dashboard)/talk/page.tsx` |
+| **Criador de Cenários Customizados** | ✅ **IMPLEMENTADO** | `src/components/talk/CustomScenarioModal.tsx`, `talk/page.tsx` |
+| **Flashcards de Frases & Idioms** | ✅ **IMPLEMENTADO** | `src/app/(dashboard)/vocabulary/page.tsx`, `vocabulary-data.ts` |
+| **Quiz dos Pontos Fracos** | ✅ **IMPLEMENTADO** | `src/components/progress/WeaknessQuizModal.tsx`, `progress/page.tsx` |
+| **Atalhos Globais (T, V, L, P, S, D)** | ✅ **IMPLEMENTADO** | `src/components/layout/GlobalKeyboardShortcuts.tsx`, `layout.tsx` |
+| **Alto Contraste & Acessibilidade** | ✅ **IMPLEMENTADO** | `src/components/layout/ThemeToggle.tsx`, `globals.css` |
 | **Feedback de Pronúncia (IPA Scoring)** | ✅ **IMPLEMENTADO** | `src/components/talk/PronunciationFeedbackModal.tsx`, `talk/page.tsx` |
 | **Busca Global (Cmd+K Palette)** | ✅ **IMPLEMENTADO** | `src/components/layout/CommandPalette.tsx`, `Header.tsx` |
 | **Export/Import & Relatório CEFR** | ✅ **IMPLEMENTADO** | `src/components/settings/FluencyReportModal.tsx`, `settings/page.tsx` |

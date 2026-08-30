@@ -113,7 +113,24 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
-## 🧹 11. Qualidade de Código & Verificação
+## ⚡ 11. Modo Focus, Cenários Customizados, Quiz Adaptativo, Deck de Frases & Atalhos
+* **Modo Focus & Exportação de Conversas (`talk/page.tsx`):**
+  - Botão de tela cheia imersiva ocultando menus e distrações.
+  - Exportação da transcrição completa da sessão em Markdown (`.md`) para estudo offline.
+* **Criador de Cenários Customizados (`src/components/talk/CustomScenarioModal.tsx` & `talk/page.tsx`):**
+  - Permite ao aluno criar qualquer situação do mundo real (entrevistas, viagens, reuniões) com prompts guiados.
+* **Flashcards de Frases & Expressões Idiomáticas (`vocabulary/page.tsx` & `vocabulary-data.ts`):**
+  - Seletor de modo `Todos | 🔤 Palavras | 🗣️ Frases` para praticar chunks inteiros de conversação nativa no algoritmo SRS SM-2.
+* **Quiz de Reforço dos Pontos Fracos (`src/components/progress/WeaknessQuizModal.tsx` & `progress/page.tsx`):**
+  - Questões adaptativas focadas nas menores habilidades do radar (gramática, conectivos, preposições) com premiação de +50 XP.
+* **Atalhos Globais de Teclado (`GlobalKeyboardShortcuts.tsx`):**
+  - Teclas `T`, `V`, `L`, `P`, `S`, `D` para navegação instantânea em qualquer tela.
+* **Acessibilidade e Alto Contraste (`ThemeToggle.tsx` & `globals.css`):**
+  - Suporte ao modo `Dark`, `Light` e `High Contrast` para maior legibilidade visual.
+
+---
+
+## 🧹 12. Qualidade de Código & Verificação
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita com `tsc --noEmit` (0 erros).
 * **Build Next.js (Turbopack):** 18 rotas compiladas com sucesso (100% de cobertura).

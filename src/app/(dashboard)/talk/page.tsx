@@ -12,6 +12,13 @@ import {
   Layers,
   Clock,
   ChevronDown,
+  Sparkles,
+  RotateCcw,
+  Languages,
+  Maximize2,
+  Minimize2,
+  Download,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
@@ -19,6 +26,7 @@ import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk
 import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
 import { WordLookupModal } from "@/components/talk/WordLookupModal";
 import { PronunciationFeedbackModal } from "@/components/talk/PronunciationFeedbackModal";
+import { CustomScenarioModal } from "@/components/talk/CustomScenarioModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { createClient } from "@/lib/supabase/client";
 import confetti from "canvas-confetti";
@@ -48,6 +56,10 @@ export default function TalkPage() {
 
   // Pronunciation Assessment State
   const [pronunciationSentence, setPronunciationSentence] = useState<{ target: string; spoken: string } | null>(null);
+
+  // Focus Mode & Custom Scenario States
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isCustomScenarioOpen, setIsCustomScenarioOpen] = useState(false);
 
   // Timer state
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -431,10 +443,48 @@ export default function TalkPage() {
     }
   };
 
+  const handleExportChatHistory = () => {
+    const transcriptText = messages
+      .map(
+        (m) =>
+          `### ${m.sender === "ai" ? (persona === "sarah" ? "Sarah (UK)" : "Marcus (US)") : "Aluno"} [${m.timestamp}]\n${m.content}\n`
+      )
+      .join("\n---\n\n");
+
+    const fullMd = `# Relatório de Sessão de Conversação — English Lab\n\n- **Data:** ${new Date().toLocaleDateString("pt-BR")}\n- **Tutor:** ${persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}\n- **Cenário:** ${selectedTopic.title} (${selectedTopic.level})\n- **Duração:** ${formatTimer(secondsElapsed)}\n\n---\n\n## 📝 Transcrição da Conversa\n\n${transcriptText}\n\n---\n*Gerado automaticamente pelo English Lab AI Studio.*`;
+
+    const blob = new Blob([fullMd], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `english-lab-conversa-${new Date().toISOString().split("T")[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const handleApplyCustomScenario = (topic: ScenarioTopic) => {
+    setSelectedTopic(topic);
+    setMessages([
+      {
+        id: String(Date.now()),
+        sender: "ai",
+        content: `Hello! I'm in character for our scenario: "${topic.title}". Let's begin whenever you're ready!`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+  };
+
   return (
-    <div className="h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto">
+    <div
+      className={
+        isFocusMode
+          ? "fixed inset-0 z-50 bg-[#050507] p-3 sm:p-6 flex flex-col justify-between overflow-hidden"
+          : "h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto"
+      }
+    >
       {/* Studio Audio Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Persona selector toggle */}
           <button
@@ -461,13 +511,24 @@ export default function TalkPage() {
             <Layers className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110" />
             <div className="min-w-0">
               <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1">
-                <span className="truncate max-w-[100px] xs:max-w-[140px] sm:max-w-none">{selectedTopic.title}</span>
+                <span className="truncate max-w-[90px] xs:max-w-[130px] sm:max-w-none">{selectedTopic.title}</span>
                 <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
               </div>
               <div className="text-[9px] sm:text-[10px] text-zinc-400 font-mono truncate">
                 Nível {selectedTopic.level} • {selectedTopic.mode}
               </div>
             </div>
+          </button>
+
+          {/* Create Custom Scenario Button */}
+          <button
+            type="button"
+            onClick={() => setIsCustomScenarioOpen(true)}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shrink-0"
+            title="Criar Cenário Customizado"
+          >
+            <Wand2 className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">Criar Cenário</span>
           </button>
         </div>
 
@@ -504,14 +565,39 @@ export default function TalkPage() {
             )}
           </button>
 
+          {/* Export Transcript Button */}
+          <button
+            type="button"
+            onClick={handleExportChatHistory}
+            disabled={messages.length <= 1}
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-30"
+            title="Exportar Conversa em Markdown (.MD)"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Focus Mode Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsFocusMode(!isFocusMode)}
+            className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
+              isFocusMode
+                ? "bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/30"
+                : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border-white/10"
+            }`}
+            title={isFocusMode ? "Sair do Modo Foco" : "Ativar Modo Foco (Imersão Total)"}
+          >
+            {isFocusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+
           <Button
             variant="outline"
             size="sm"
             onClick={handleForgotWord}
-            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden md:flex"
+            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden lg:flex"
           >
             <HelpCircle className="w-3.5 h-3.5 mr-1" />
-            <span>Esqueci a palavra</span>
+            <span>Esqueci</span>
           </Button>
 
           {/* End Session Button */}
@@ -741,6 +827,13 @@ export default function TalkPage() {
         onClose={() => setPronunciationSentence(null)}
         targetSentence={pronunciationSentence?.target}
         spokenSentence={pronunciationSentence?.spoken}
+      />
+
+      {/* User-Defined Custom Scenario Creator Modal */}
+      <CustomScenarioModal
+        isOpen={isCustomScenarioOpen}
+        onClose={() => setIsCustomScenarioOpen(false)}
+        onApplyCustomScenario={handleApplyCustomScenario}
       />
     </div>
   );
