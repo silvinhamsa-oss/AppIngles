@@ -11,7 +11,15 @@ export class AnthropicProvider implements AIProvider {
         content: m.content,
       }));
 
-    const payload: any = {
+    interface AnthropicPayload {
+      model: string;
+      max_tokens: number;
+      temperature: number;
+      messages: Array<{ role: "user" | "assistant"; content: string }>;
+      system?: string;
+    }
+
+    const payload: AnthropicPayload = {
       model: config.model || "claude-3-5-sonnet-20241022",
       max_tokens: request.maxTokens ?? config.maxTokens ?? 2048,
       temperature: request.temperature ?? config.temperature ?? 0.7,
@@ -67,11 +75,13 @@ export class AnthropicProvider implements AIProvider {
         success: true,
         message: `Conexão bem-sucedida com Anthropic Claude (${config.model || "claude-3-5-sonnet"}).`,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha ao conectar com a API Anthropic.";
       return {
         success: false,
-        message: err.message || "Falha ao conectar com a API Anthropic.",
+        message,
       };
     }
   }
 }
+

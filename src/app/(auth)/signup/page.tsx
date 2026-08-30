@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   ArrowRight,
   Fingerprint,
   CheckCircle2,
@@ -36,7 +35,7 @@ export default function SignupPage() {
 
     try {
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -60,11 +59,12 @@ export default function SignupPage() {
         message: "Conta criada com sucesso! Redirecionando para o seu painel...",
       });
       router.push("/dashboard");
-    } catch (err: any) {
-      let friendlyMessage = err.message || "Erro ao criar conta. Tente novamente.";
-      if (err.message?.includes("User already registered")) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "";
+      let friendlyMessage = errorMessage || "Erro ao criar conta. Tente novamente.";
+      if (errorMessage.includes("User already registered")) {
         friendlyMessage = "Este e-mail já está cadastrado. Tente fazer login.";
-      } else if (err.message?.includes("Password should be at least 6 characters")) {
+      } else if (errorMessage.includes("Password should be at least 6 characters")) {
         friendlyMessage = "A senha deve ter no mínimo 6 caracteres.";
       }
       setFeedback({

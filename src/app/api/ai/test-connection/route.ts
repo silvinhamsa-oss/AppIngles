@@ -23,11 +23,13 @@ export async function POST(req: NextRequest) {
 
     const result = await AIRouter.testConnection(config);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Test connection API error:", error);
+    const errorMsg = error instanceof Error ? error.message : "Falha ao conectar com o provedor de IA.";
     return NextResponse.json(
-      { success: false, message: error.message || "Falha ao conectar com o provedor de IA." },
+      { success: false, message: errorMsg },
       { status: 500 }
     );
   }
 }
+

@@ -41,7 +41,7 @@ export function AudioVisualizer({
               isActive ? "animate-pulse" : "opacity-30"
             )}
             style={{
-              height: isActive ? `${Math.max(6, (Math.sin(i + Date.now()) * 14 + 16))}px` : `${defaultHeight}px`,
+              height: isActive ? `${Math.max(6, Math.sin(i * 1.3) * 10 + 14)}px` : `${defaultHeight}px`,
               animationDelay: `${delay}s`,
               animationDuration: `${0.6 + (i % 4) * 0.2}s`,
             }}

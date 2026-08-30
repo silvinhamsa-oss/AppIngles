@@ -7,12 +7,7 @@ import {
   Plus,
   Play,
   Volume2,
-  Sparkles,
   RotateCcw,
-  CheckCircle2,
-  Layers,
-  Filter,
-  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -24,12 +19,27 @@ import { playPronunciation } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 
+interface DBVocabularyRow {
+  id: string;
+  word: string;
+  phonetic_ipa?: string;
+  part_of_speech?: "noun" | "verb" | "phrasal_verb" | "adjective" | "adverb" | "connector" | "idiom";
+  cefr_level?: string;
+  translation_pt: string;
+  definition_en?: string;
+  example_sentence?: string;
+  repetition_count?: number;
+  interval_days?: number;
+  ease_factor?: number;
+  next_review_date?: string;
+  status?: "new" | "learning" | "reviewing" | "active" | "mastered" | "difficult";
+}
+
 export default function VocabularyPage() {
   const [items, setItems] = useState<VocabularyItem[]>(SEED_VOCABULARY);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
-  const [isLoading, setIsLoading] = useState(false);
 
   // Modals
   const [isFlashcardOpen, setIsFlashcardOpen] = useState(false);
@@ -37,7 +47,6 @@ export default function VocabularyPage() {
 
   useEffect(() => {
     async function loadVocabulary() {
-      setIsLoading(true);
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -50,7 +59,7 @@ export default function VocabularyPage() {
             .order("created_at", { ascending: false });
 
           if (!error && data && data.length > 0) {
-            const mappedItems: VocabularyItem[] = data.map((d: any) => ({
+            const mappedItems: VocabularyItem[] = (data as unknown as DBVocabularyRow[]).map((d) => ({
               id: d.id,
               word: d.word,
               phoneticIpa: d.phonetic_ipa || "/.../",
@@ -77,8 +86,6 @@ export default function VocabularyPage() {
         }
       } catch (err) {
         console.error("Error loading vocabulary:", err);
-      } finally {
-        setIsLoading(false);
       }
     }
 
@@ -257,7 +264,7 @@ export default function VocabularyPage() {
 
               {item.exampleSentence && (
                 <p className="text-xs text-zinc-300 italic leading-relaxed border-l-2 border-emerald-500/40 pl-2.5 py-0.5">
-                  "{item.exampleSentence}"
+                  &ldquo;{item.exampleSentence}&rdquo;
                 </p>
               )}
             </div>

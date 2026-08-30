@@ -6,24 +6,34 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
 import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
 import { VoiceOrb } from "@/components/ui/VoiceOrb";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CEFRLevel, SkillRadarData } from "@/types/profile";
 import { VocabularyItem } from "@/types/vocabulary";
 import { playPronunciation } from "@/lib/audio";
 import { createClient } from "@/lib/supabase/client";
 import { SEED_VOCABULARY } from "@/lib/vocabulary-data";
 import {
-  TrendingUp,
   Brain,
-  Clock,
   ArrowRight,
   Volume2,
-  Sparkles,
   Flame,
   Check,
-  Calendar,
 } from "lucide-react";
-import Link from "next/link";
+
+interface DBVocabItem {
+  id: string;
+  word: string;
+  phonetic_ipa?: string;
+  part_of_speech?: "noun" | "verb" | "phrasal_verb" | "adjective" | "adverb" | "connector" | "idiom";
+  cefr_level?: string;
+  translation_pt: string;
+  definition_en?: string;
+  example_sentence?: string;
+  repetition_count?: number;
+  interval_days?: number;
+  ease_factor?: number;
+  next_review_date?: string;
+  status?: "new" | "learning" | "reviewing" | "active" | "mastered" | "difficult";
+}
 
 export default function DashboardPage() {
   const [level, setLevel] = useState<CEFRLevel>("B1+");
@@ -33,7 +43,7 @@ export default function DashboardPage() {
   const [userXp, setUserXp] = useState(1240);
   const [userName, setUserName] = useState("Welld");
 
-  const [radarData, setRadarData] = useState<SkillRadarData>({
+  const [radarData] = useState<SkillRadarData>({
     speaking: 72,
     vocabulary: 68,
     listening: 78,
@@ -41,6 +51,7 @@ export default function DashboardPage() {
     reading: 85,
     writing: 74,
   });
+
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -71,7 +82,7 @@ export default function DashboardPage() {
             .limit(4);
 
           if (vocab && vocab.length > 0) {
-            const mappedVocab: VocabularyItem[] = vocab.map((v: any) => ({
+            const mappedVocab: VocabularyItem[] = (vocab as unknown as DBVocabItem[]).map((v) => ({
               id: v.id,
               word: v.word,
               phoneticIpa: v.phonetic_ipa || "/.../",
@@ -184,7 +195,7 @@ export default function DashboardPage() {
                       {item.translationPt}
                     </p>
                     <p className="text-[11px] text-zinc-400 italic line-clamp-2">
-                      "{item.exampleSentence}"
+                      &ldquo;{item.exampleSentence}&rdquo;
                     </p>
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 mt-2.5 pt-2 border-t border-white/5 font-mono">

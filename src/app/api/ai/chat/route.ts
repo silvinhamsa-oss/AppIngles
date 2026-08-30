@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AIRouter } from "@/lib/ai/router";
-import { AIConfig, ChatMessage } from "@/lib/ai/types";
+import { AIConfig, AIProviderType, ChatMessage } from "@/lib/ai/types";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, scenarioId, persona, config, stream = true } = body;
+    const { messages, scenarioId, persona, config, providerConfig, stream = true } = body;
+    const clientConfig = config || providerConfig;
 
     // Resolve AI configuration with server-side environment variables as fallback
     const activeConfig: AIConfig = {
-      provider: config?.provider || (process.env.AI_PROVIDER as any) || "openrouter",
-      apiKey: config?.apiKey || process.env.AI_API_KEY || "",
-      model: config?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct",
-      baseUrl: config?.baseUrl || process.env.AI_BASE_URL,
-      temperature: config?.temperature ?? 0.7,
-      maxTokens: config?.maxTokens ?? 500,
+      provider: (clientConfig?.provider as AIProviderType) || (process.env.AI_PROVIDER as AIProviderType) || "openrouter",
+      apiKey: clientConfig?.apiKey || process.env.AI_API_KEY || "",
+      model: clientConfig?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct",
+      baseUrl: clientConfig?.baseUrl || process.env.AI_BASE_URL,
+      temperature: clientConfig?.temperature ?? 0.7,
+      maxTokens: clientConfig?.maxTokens ?? 500,
     };
 
     // Ensure API Key exists (unless using local Ollama)
@@ -49,11 +50,12 @@ export async function POST(req: NextRequest) {
             }
             controller.enqueue(textEncoder.encode("data: [DONE]\n\n"));
             controller.close();
-          } catch (streamErr: any) {
+          } catch (streamErr: unknown) {
             console.error("Stream generation error:", streamErr);
+            const errorMsg = streamErr instanceof Error ? streamErr.message : "Erro no streaming da IA.";
             controller.enqueue(
               textEncoder.encode(
-                `data: ${JSON.stringify({ error: streamErr.message || "Erro no streaming da IA." })}\n\n`
+                `data: ${JSON.stringify({ error: errorMsg })}\n\n`
               )
             );
             controller.close();
@@ -76,11 +78,13 @@ export async function POST(req: NextRequest) {
       content: response.content,
       usage: response.usage,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Chat API route error:", error);
+    const errorMsg = error instanceof Error ? error.message : "Erro ao processar conversa com o tutor de IA.";
     return NextResponse.json(
-      { error: error.message || "Erro ao processar conversa com o tutor de IA." },
+      { error: errorMsg },
       { status: 500 }
     );
   }
 }
+

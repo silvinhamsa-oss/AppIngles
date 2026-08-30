@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { MessageSquare, Library, Headphones, BookOpen, ArrowRight, Sparkles } from "lucide-react";
+import { MessageSquare, Library, Headphones, BookOpen, ArrowRight } from "lucide-react";
+
 
 export function QuickActions() {
   const actions = [

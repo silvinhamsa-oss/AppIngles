@@ -1,6 +1,5 @@
-import { CEFRLevel } from "./profile";
-
 export type LevelCategory = "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "EXAM_PREP";
+
 
 export interface ExerciseItem {
   id: string;

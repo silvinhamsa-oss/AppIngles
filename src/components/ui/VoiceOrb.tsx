@@ -92,7 +92,7 @@ export function VoiceOrb({
           Welcome back, <span className="text-amber-400">{userName}</span>!
         </h3>
         <p className="text-xs text-zinc-400 font-normal">
-          Meta ativa: <strong>Nível {targetLevel}</strong> • {dailyGoalMinutes} min diários • Toque no orbe para ouvir
+          Meta ativa: <strong>Nível {targetLevel}</strong> • {dailyGoalMinutes} min diários • <strong>{streakDays} dias</strong> de ofensiva
         </p>
       </div>
     </div>

@@ -26,7 +26,7 @@ export function LevelSwitcher({
         }`}
       >
         <User className="w-3.5 h-3.5" />
-        <span>Meu Perfil (Intermediário • B1+)</span>
+        <span>Meu Perfil (Nível {currentLevel})</span>
         {currentProfile === "parent" && <Check className="w-3.5 h-3.5 ml-1 text-zinc-950 stroke-[3]" />}
       </button>
 

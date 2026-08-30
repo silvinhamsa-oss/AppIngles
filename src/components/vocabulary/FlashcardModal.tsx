@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Volume2, RotateCw, Check, X, Sparkles, ArrowRight } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Volume2, RotateCw, Sparkles } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { playPronunciation } from "@/lib/audio";
@@ -27,13 +27,28 @@ export function FlashcardModal({
 
   const currentItem = items[currentIndex];
 
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setIsCompleted(false);
-    }
-  }, [isOpen]);
+  const handleScore = useCallback(
+    (score: number) => {
+      if (onRate && currentItem) {
+        onRate(currentItem.id, score);
+      }
+
+      if (currentIndex + 1 < items.length) {
+        setIsFlipped(false);
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        setIsCompleted(true);
+        try {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        } catch {}
+      }
+    },
+    [currentIndex, currentItem, items.length, onRate]
+  );
 
   // Keyboard shortcut support: Space to flip, 1-4 to rate
   useEffect(() => {
@@ -44,38 +59,25 @@ export function FlashcardModal({
         e.preventDefault();
         setIsFlipped((prev) => !prev);
       } else if (isFlipped && ["1", "2", "3", "4"].includes(e.key)) {
-        handleScore(parseInt(e.key));
+        handleScore(parseInt(e.key, 10));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isFlipped, isCompleted, currentIndex]);
+  }, [isOpen, isFlipped, isCompleted, handleScore]);
 
-  const handleScore = (score: number) => {
-    if (onRate && currentItem) {
-      onRate(currentItem.id, score);
-    }
-
-    if (currentIndex + 1 < items.length) {
-      setIsFlipped(false);
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setIsCompleted(true);
-      try {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-      } catch {}
-    }
+  const handleClose = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setIsCompleted(false);
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} maxWidth="lg">
       {!isCompleted && currentItem ? (
         <div className="space-y-6">
           {/* Header Progress */}
@@ -220,7 +222,7 @@ export function FlashcardModal({
           <p className="text-sm text-zinc-400 max-w-sm mx-auto">
             Você reforçou a memória ativa de <strong>{items.length} palavras</strong>. Os intervalos de repetição foram recalculados.
           </p>
-          <Button variant="glow" onClick={onClose} className="mt-4">
+          <Button variant="glow" onClick={handleClose} className="mt-4">
             Voltar ao Banco de Vocabulário
           </Button>
         </div>

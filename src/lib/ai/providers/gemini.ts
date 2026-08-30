@@ -20,7 +20,18 @@ export class GeminiProvider implements AIProvider {
 
     const systemInstruction = request.messages.find((m) => m.role === "system");
 
-    const payload: any = {
+    interface GeminiPayload {
+      contents: Array<{ role: string; parts: Array<{ text: string }> }>;
+      generationConfig: {
+        temperature: number;
+        maxOutputTokens: number;
+      };
+      systemInstruction?: {
+        parts: Array<{ text: string }>;
+      };
+    }
+
+    const payload: GeminiPayload = {
       contents,
       generationConfig: {
         temperature: request.temperature ?? config.temperature ?? 0.7,
@@ -75,11 +86,13 @@ export class GeminiProvider implements AIProvider {
         success: true,
         message: `Conexão bem-sucedida com Google Gemini (${config.model || "gemini-2.0-flash"}).`,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha ao conectar com a API do Google Gemini.";
       return {
         success: false,
-        message: err.message || "Falha ao conectar com a API do Google Gemini.",
+        message,
       };
     }
   }
 }
+

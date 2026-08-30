@@ -8,7 +8,6 @@ import {
   Coffee,
   Code2,
   TrendingUp,
-  Sparkles,
   ChevronRight,
 } from "lucide-react";
 import { ConversationMode } from "@/types/conversation";
@@ -18,11 +17,12 @@ export interface ScenarioTopic {
   id: string;
   title: string;
   subtitle: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   mode: ConversationMode;
   level: CEFRLevel;
   color: string;
 }
+
 
 export const SCENARIO_TOPICS: ScenarioTopic[] = [
   {

@@ -129,7 +129,7 @@ export class OpenAICompatibleProvider implements AIProvider {
 
   async testConnection(config: AIProviderConfig): Promise<{ success: boolean; message: string }> {
     try {
-      const res = await this.chat(
+      await this.chat(
         {
           messages: [{ role: "user", content: "hi" }],
           maxTokens: 1,
@@ -141,11 +141,13 @@ export class OpenAICompatibleProvider implements AIProvider {
         success: true,
         message: `Conexão bem-sucedida com ${config.provider.toUpperCase()} (${config.model}).`,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha ao conectar com o provedor de IA.";
       return {
         success: false,
-        message: err.message || "Falha ao conectar com o provedor de IA.",
+        message,
       };
     }
   }
 }
+

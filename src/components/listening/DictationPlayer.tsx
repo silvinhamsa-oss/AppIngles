@@ -4,24 +4,19 @@ import React, { useState } from "react";
 import {
   Volume2,
   Play,
-  RotateCcw,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  Gauge,
   HelpCircle,
   ArrowRight,
-  Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { playPronunciation } from "@/lib/audio";
-import { CEFRLevel } from "@/types/profile";
 import confetti from "canvas-confetti";
 
 import { DictationExercise, SEED_DICTATIONS } from "@/lib/dictation-data";
 
 export function DictationPlayer() {
-  const [exercises, setExercises] = useState<DictationExercise[]>(SEED_DICTATIONS);
+  const [exercises] = useState<DictationExercise[]>(SEED_DICTATIONS);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState<0.75 | 1.0 | 1.25>(1.0);
   const [userInput, setUserInput] = useState("");
@@ -64,7 +59,7 @@ export function DictationPlayer() {
     let matchCount = 0;
     const diff: Array<{ word: string; status: "correct" | "missing" | "extra" }> = [];
 
-    targetWords.forEach((word, idx) => {
+    targetWords.forEach((word) => {
       if (userWords.includes(word)) {
         diff.push({ word, status: "correct" });
         matchCount++;
@@ -72,6 +67,7 @@ export function DictationPlayer() {
         diff.push({ word, status: "missing" });
       }
     });
+
 
     const accuracyPercent = Math.round((matchCount / Math.max(1, targetWords.length)) * 100);
     const isExact = accuracyPercent === 100;
@@ -228,7 +224,7 @@ export function DictationPlayer() {
                 Frase Original:
               </div>
               <div className="text-sm font-semibold text-white">
-                "{currentExercise.targetSentence}"
+                &ldquo;{currentExercise.targetSentence}&rdquo;
               </div>
             </div>
 

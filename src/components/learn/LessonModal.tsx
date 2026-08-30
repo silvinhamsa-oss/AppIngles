@@ -6,17 +6,16 @@ import {
   Volume2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   BookOpen,
   Award,
   ArrowRight,
-  RotateCcw,
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Lesson, ExerciseItem } from "@/types/curriculum";
+import { Lesson } from "@/types/curriculum";
 import { playPronunciation } from "@/lib/audio";
 import confetti from "canvas-confetti";
+
 
 interface LessonModalProps {
   isOpen: boolean;
@@ -127,7 +126,7 @@ export function LessonModal({
               </div>
 
               <p className="text-sm text-zinc-200 leading-relaxed font-serif italic bg-black/40 p-4 rounded-xl border border-white/5">
-                "{lesson.audioText}"
+                &ldquo;{lesson.audioText}&rdquo;
               </p>
             </div>
 

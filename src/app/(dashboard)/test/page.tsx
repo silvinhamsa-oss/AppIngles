@@ -4,22 +4,19 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   GraduationCap,
-  Sparkles,
   Volume2,
   Mic,
   MicOff,
-  CheckCircle2,
-  AlertCircle,
   ArrowRight,
   RotateCcw,
   Award,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
 import confetti from "canvas-confetti";
+
 
 interface Question {
   id: number;
@@ -292,7 +289,7 @@ export default function PlacementTestPage() {
 
           <div className="p-5 rounded-2xl bg-[#14141e] border border-white/10 flex items-center justify-between">
             <div className="text-sm font-semibold text-white">
-              "Tell me about your job and why you want to improve your English."
+              &ldquo;Tell me about your job and why you want to improve your English.&rdquo;
             </div>
             <button
               onClick={() => playPronunciation("Tell me about your job and why you want to improve your English.", 0.95, "en-US")}

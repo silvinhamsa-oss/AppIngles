@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Brain,
@@ -11,11 +10,11 @@ import {
   ArrowRight,
   X,
   Volume2,
-  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { playPronunciation } from "@/lib/audio";
 import confetti from "canvas-confetti";
+
 
 export interface EvaluationReport {
   fluencyScore: number;
@@ -226,7 +225,7 @@ export function SessionReportModal({
                       </button>
                     </div>
                     <p className="text-[11px] text-amber-300/80 mt-1">{item.translationPt}</p>
-                    <p className="text-[10px] text-zinc-500 italic mt-0.5 truncate">"{item.context}"</p>
+                    <p className="text-[10px] text-zinc-500 italic mt-0.5 truncate">&ldquo;{item.context}&rdquo;</p>
                   </div>
 
                   <button

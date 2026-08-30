@@ -43,26 +43,64 @@ export interface SpeechRecognitionResultListener {
   onEnd: () => void;
 }
 
+// Web Speech API interfaces
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      isFinal: boolean;
+      [index: number]: { transcript: string };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
+
 export function startSpeechRecognition(
   lang: string = "en-US",
   callbacks: SpeechRecognitionResultListener
 ): { stop: () => void } | null {
   if (typeof window === "undefined") return null;
 
-  const SpeechRecognition =
-    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const SpeechRecognitionClass =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
+  if (!SpeechRecognitionClass) {
     callbacks.onError("Speech recognition not supported in this browser.");
     return null;
   }
 
-  const recognition = new SpeechRecognition();
+  const recognition = new SpeechRecognitionClass();
   recognition.lang = lang;
   recognition.continuous = true;
   recognition.interimResults = true;
 
-  recognition.onresult = (event: any) => {
+  recognition.onresult = (event: SpeechRecognitionEvent) => {
     let interimTranscript = "";
     let finalTranscript = "";
 
@@ -80,7 +118,7 @@ export function startSpeechRecognition(
     }
   };
 
-  recognition.onerror = (event: any) => {
+  recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
     if (event.error !== "no-speech") {
       callbacks.onError(event.error);
     }
@@ -92,8 +130,9 @@ export function startSpeechRecognition(
 
   try {
     recognition.start();
-  } catch (e: any) {
-    callbacks.onError(e.message || "Could not start speech recognition.");
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Could not start speech recognition.";
+    callbacks.onError(message);
     return null;
   }
 
@@ -105,3 +144,4 @@ export function startSpeechRecognition(
     },
   };
 }
+

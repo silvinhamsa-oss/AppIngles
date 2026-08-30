@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -10,42 +9,36 @@ import {
   Cpu,
   User,
   Volume2,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Save,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
 
+function getSavedAIConfig() {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = localStorage.getItem("english-lab-ai-config");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("ai");
 
-  // AI Configuration State
-  const [provider, setProvider] = useState<AIProviderType>("openrouter");
-  const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("meta-llama/llama-3.3-70b-instruct");
-  const [baseUrl, setBaseUrl] = useState("");
-  const [temperature, setTemperature] = useState(0.7);
-  const [maxTokens, setMaxTokens] = useState(2048);
+  // AI Configuration State with lazy initializers
+  const [provider, setProvider] = useState<AIProviderType>(() => getSavedAIConfig()?.provider || "openrouter");
+  const [apiKey, setApiKey] = useState<string>(() => getSavedAIConfig()?.apiKey || "");
+  const [model, setModel] = useState<string>(() => getSavedAIConfig()?.model || "meta-llama/llama-3.3-70b-instruct");
+  const [baseUrl, setBaseUrl] = useState<string>(() => getSavedAIConfig()?.baseUrl || "");
+  const [temperature, setTemperature] = useState<number>(() => getSavedAIConfig()?.temperature ?? 0.7);
+  const [maxTokens, setMaxTokens] = useState<number>(() => getSavedAIConfig()?.maxTokens ?? 2048);
 
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testFeedback, setTestFeedback] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("english-lab-ai-config");
-    if (saved) {
-      try {
-        const config = JSON.parse(saved);
-        if (config.provider) setProvider(config.provider);
-        if (config.apiKey) setApiKey(config.apiKey);
-        if (config.model) setModel(config.model);
-        if (config.baseUrl) setBaseUrl(config.baseUrl);
-        if (config.temperature) setTemperature(config.temperature);
-        if (config.maxTokens) setMaxTokens(config.maxTokens);
-      } catch {}
-    }
-  }, []);
 
   const handleTestConnection = async () => {
     setTestStatus("testing");
@@ -71,11 +64,13 @@ export default function SettingsPage() {
         setTestStatus("error");
         setTestFeedback(data.message || "Não foi possível conectar com o provedor.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro de rede ao testar conexão.";
       setTestStatus("error");
-      setTestFeedback(err.message || "Erro de rede ao testar conexão.");
+      setTestFeedback(message);
     }
   };
+
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

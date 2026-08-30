@@ -7,11 +7,7 @@ import {
   Send,
   Volume2,
   VolumeX,
-  Sparkles,
   HelpCircle,
-  Brain,
-  RotateCcw,
-  Zap,
   Award,
   Layers,
   Clock,
@@ -22,7 +18,6 @@ import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { TopicSelector, SCENARIO_TOPICS, ScenarioTopic } from "@/components/talk/TopicSelector";
 import { SessionReportModal, EvaluationReport } from "@/components/talk/SessionReportModal";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
-import { ConversationMode } from "@/types/conversation";
 import confetti from "canvas-confetti";
 
 interface MessageItem {
@@ -66,13 +61,15 @@ export default function TalkPage() {
   ]);
 
   useEffect(() => {
-    let interval: any = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isTimerRunning) {
       interval = setInterval(() => {
         setSecondsElapsed((prev) => prev + 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isTimerRunning]);
 
   useEffect(() => {
@@ -103,7 +100,7 @@ export default function TalkPage() {
     } else {
       setIsRecording(true);
       const recognizer = startSpeechRecognition("en-US", {
-        onResult: (transcript, isFinal) => {
+        onResult: (transcript) => {
           setInputMessage(transcript);
         },
         onError: (err) => {

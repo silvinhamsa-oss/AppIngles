@@ -10,6 +10,7 @@ export interface MissionBlock {
 export interface MissionPlan {
   totalMinutes: number;
   xpReward: number;
+  targetLevel?: CEFRLevel;
   blocks: MissionBlock[];
 }
 
@@ -131,5 +132,11 @@ export const MISSION_PLANS_BY_DURATION: Record<number, MissionPlan> = {
 };
 
 export function getMissionPlan(duration: number, targetLevel: CEFRLevel = "B1+"): MissionPlan {
-  return MISSION_PLANS_BY_DURATION[duration] || MISSION_PLANS_BY_DURATION[20];
+  const plan = MISSION_PLANS_BY_DURATION[duration] || MISSION_PLANS_BY_DURATION[20];
+  return {
+    ...plan,
+    targetLevel,
+  };
 }
+
+

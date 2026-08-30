@@ -62,13 +62,15 @@ export async function registerBiometrics(userEmail: string): Promise<{ success: 
     }
 
     return { success: false, message: "Não foi possível registrar a credencial biométrica." };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Biometric registration error:", err);
+    const isNotAllowed = err instanceof Error && err.name === "NotAllowedError";
+    const errorMessage = err instanceof Error ? err.message : "Erro ao registrar biometria.";
     return {
       success: false,
-      message: err.name === "NotAllowedError" 
-        ? "Registro biométrico cancelado pelo usuário." 
-        : err.message || "Erro ao registrar biometria.",
+      message: isNotAllowed
+        ? "Registro biométrico cancelado pelo usuário."
+        : errorMessage,
     };
   }
 }
@@ -110,13 +112,15 @@ export async function authenticateWithBiometrics(): Promise<{ success: boolean; 
     }
 
     return { success: false, message: "Falha na verificação biométrica." };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Biometric authentication error:", err);
+    const isNotAllowed = err instanceof Error && err.name === "NotAllowedError";
+    const errorMessage = err instanceof Error ? err.message : "Falha na leitura biométrica.";
     return {
       success: false,
-      message: err.name === "NotAllowedError"
+      message: isNotAllowed
         ? "Leitura biométrica cancelada pelo usuário."
-        : err.message || "Falha na leitura biométrica.",
+        : errorMessage,
     };
   }
 }

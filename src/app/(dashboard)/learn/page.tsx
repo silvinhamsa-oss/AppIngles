@@ -2,19 +2,14 @@
 
 import React, { useState } from "react";
 import {
-  BookOpen,
   CheckCircle2,
   Clock,
-  Sparkles,
   Play,
-  Award,
   ShieldCheck,
-  ArrowRight,
   GraduationCap,
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { LessonModal } from "@/components/learn/LessonModal";
 import { ExamSimulatorModal } from "@/components/learn/ExamSimulatorModal";
@@ -28,12 +23,14 @@ export default function LearnPage() {
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({
     a1_1: true,
   });
+  const [, setTotalXp] = useState(1240);
 
   const levelInfo = LEVEL_METADATA[selectedLevel];
   const levelLessons = CURRICULUM_LESSONS.filter((l) => l.level === selectedLevel);
 
   const handleCompleteLesson = (lessonId: string, xpEarned: number) => {
     setCompletedLessons((prev) => ({ ...prev, [lessonId]: true }));
+    setTotalXp((prev) => prev + xpEarned);
   };
 
   const levelProgress = Math.round(

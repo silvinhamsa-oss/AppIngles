@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AIRouter } from "@/lib/ai/router";
-import { AIConfig, ChatMessage } from "@/lib/ai/types";
+import { AIConfig, AIProviderType, ChatMessage } from "@/lib/ai/types";
 import { EvaluationReport } from "@/types/conversation";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, scenarioId, persona, config } = body;
+    const { messages, scenarioId, persona, config, providerConfig } = body;
+    const clientConfig = config || providerConfig;
 
     const activeConfig: AIConfig = {
-      provider: config?.provider || (process.env.AI_PROVIDER as any) || "openrouter",
-      apiKey: config?.apiKey || process.env.AI_API_KEY || "",
-      model: config?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct",
-      baseUrl: config?.baseUrl || process.env.AI_BASE_URL,
+      provider: (clientConfig?.provider as AIProviderType) || (process.env.AI_PROVIDER as AIProviderType) || "openrouter",
+      apiKey: clientConfig?.apiKey || process.env.AI_API_KEY || "",
+      model: clientConfig?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct",
+      baseUrl: clientConfig?.baseUrl || process.env.AI_BASE_URL,
       temperature: 0.3,
       maxTokens: 1000,
     };
@@ -85,11 +86,13 @@ Respond ONLY with a valid, raw JSON object (without markdown code blocks, backti
 
     const report: EvaluationReport = JSON.parse(cleanJson);
     return NextResponse.json(report);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Evaluation API error:", error);
+    const errorMsg = error instanceof Error ? error.message : "Falha ao gerar relatório pedagógico de avaliação.";
     return NextResponse.json(
-      { error: error.message || "Falha ao gerar relatório pedagógico de avaliação." },
+      { error: errorMsg },
       { status: 500 }
     );
   }
 }
+

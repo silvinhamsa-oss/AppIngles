@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   ArrowRight,
   Fingerprint,
   CheckCircle2,
@@ -22,7 +21,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
-  const [hasBiometrics, setHasBiometrics] = useState(true);
+  const [hasBiometrics, setHasBiometrics] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -47,11 +46,12 @@ export default function LoginPage() {
 
       setFeedback({ type: "success", message: "Login realizado com sucesso! Redirecionando..." });
       router.push("/dashboard");
-    } catch (err: any) {
-      let friendlyMessage = err.message || "Erro ao fazer login. Verifique seu e-mail e senha.";
-      if (err.message?.includes("Invalid login credentials")) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "";
+      let friendlyMessage = errorMessage || "Erro ao fazer login. Verifique seu e-mail e senha.";
+      if (errorMessage.includes("Invalid login credentials")) {
         friendlyMessage = "E-mail ou senha incorretos. Por favor, tente novamente.";
-      } else if (err.message?.includes("Email not confirmed")) {
+      } else if (errorMessage.includes("Email not confirmed")) {
         friendlyMessage = "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
       }
       setFeedback({
@@ -70,16 +70,32 @@ export default function LoginPage() {
     try {
       const res = await authenticateWithBiometrics();
       if (res.success && res.userEmail) {
-        setFeedback({
-          type: "success",
-          message: "Autenticação biométrica validada! Redirecionando...",
-        });
-        setTimeout(() => router.push("/dashboard"), 1000);
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          setFeedback({
+            type: "success",
+            message: "Identidade biométrica confirmada! Entrando...",
+          });
+          setTimeout(() => router.push("/dashboard"), 800);
+        } else {
+          setEmail(res.userEmail);
+          setFeedback({
+            type: "error",
+            message:
+              "Biometria validada. Por favor, insira sua senha para revalidar a sessão com segurança.",
+          });
+        }
       } else {
         setFeedback({ type: "error", message: res.message });
       }
-    } catch (err: any) {
-      setFeedback({ type: "error", message: err.message || "Falha na leitura biométrica." });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Falha na leitura biométrica.";
+      setFeedback({ type: "error", message });
     } finally {
       setIsBiometricLoading(false);
     }
@@ -94,13 +110,14 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/dashboard`,
         },
       });
-    } catch (err: any) {
+    } catch {
       setFeedback({
         type: "error",
         message: "Falha ao iniciar autenticação com Google.",
       });
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#050507] text-[#fafafa] aurora-bg">
@@ -123,23 +140,27 @@ export default function LoginPage() {
         {/* Main Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-2xl shadow-amber-500/5 space-y-5">
           {/* Biometric One-Touch Login Button (Mobile First) */}
-          <button
-            type="button"
-            onClick={handleBiometricAuth}
-            disabled={isBiometricLoading}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/40 hover:border-amber-400 text-amber-300 font-bold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg shadow-amber-500/10 active:scale-98 disabled:opacity-50"
-          >
-            <Fingerprint className="w-5 h-5 text-amber-400 animate-pulse" />
-            <span>
-              {isBiometricLoading ? "Lendo Biometria..." : "Entrar com Biometria / Face ID"}
-            </span>
-          </button>
+          {hasBiometrics && (
+            <>
+              <button
+                type="button"
+                onClick={handleBiometricAuth}
+                disabled={isBiometricLoading}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/40 hover:border-amber-400 text-amber-300 font-bold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg shadow-amber-500/10 active:scale-98 disabled:opacity-50"
+              >
+                <Fingerprint className="w-5 h-5 text-amber-400 animate-pulse" />
+                <span>
+                  {isBiometricLoading ? "Lendo Biometria..." : "Entrar com Biometria / Face ID"}
+                </span>
+              </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] font-mono uppercase text-zinc-500">ou com e-mail</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[10px] font-mono uppercase text-zinc-500">ou com e-mail</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+            </>
+          )}
 
           {/* Feedback Messages */}
           {feedback && (

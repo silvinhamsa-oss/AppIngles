@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Volume2, ArrowRight, Play, Sparkles, Brain, MessageSquare, Headphones } from "lucide-react";
+import { Volume2, ArrowRight, Sparkles, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { AudioVisualizer } from "@/components/ui/AudioVisualizer";
 import { playPronunciation } from "@/lib/audio";
+
 
 export function HeroSection() {
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);

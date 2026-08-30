@@ -16,7 +16,7 @@ async function testSupabase() {
 
   try {
     // 1. Test Auth Service Health
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { error: sessionError } = await supabase.auth.getSession();
     if (sessionError) {
       console.log("❌ Erro no serviço de Auth:", sessionError.message);
     } else {

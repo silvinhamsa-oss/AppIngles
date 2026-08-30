@@ -7,12 +7,9 @@ import {
   Clock,
   Mic,
   MicOff,
-  Volume2,
-  Sparkles,
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
-  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
@@ -34,14 +31,17 @@ export function ExamSimulatorModal({ isOpen, onClose }: ExamSimulatorModalProps)
   const [aiReport, setAiReport] = useState<EvaluationReport | null>(null);
 
   useEffect(() => {
-    let timer: any = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
     if ((examStep === "part1" || examStep === "part2") && timerSeconds > 0) {
       timer = setInterval(() => {
         setTimerSeconds((prev) => prev - 1);
       }, 1000);
     }
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [examStep, timerSeconds]);
+
 
   if (!isOpen) return null;
 

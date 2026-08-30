@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Sparkles, Clock, Volume2, Play, CheckCircle2, ChevronRight } from "lucide-react";
+import { Clock, Volume2, Play, CheckCircle2, ChevronRight } from "lucide-react";
 import { CEFRLevel } from "@/types/profile";
 import { playPronunciation } from "@/lib/audio";
 import { getMissionPlan } from "@/lib/mission-data";
@@ -24,37 +24,40 @@ export function MissionCard({
     const audio = playPronunciation(
       "Good morning! In today's session, let's practice explaining your current project goals and key challenges without mental translation.",
       0.95,
-      "en-GB"
+      "en-US"
     );
     if (audio) {
       audio.onend = () => setIsPlayingAudio(false);
       audio.onerror = () => setIsPlayingAudio(false);
     } else {
-      setTimeout(() => setIsPlayingAudio(false), 3000);
+      setIsPlayingAudio(false);
     }
   };
 
   return (
-    <div className="card-halo-amber relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-[#0d0d14] border border-amber-500/30 shadow-2xl transition-all group">
-      {/* Decorative background glow */}
-      <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-[#0d0d14] border border-amber-500/30 shadow-2xl shadow-amber-500/5 card-halo-gold">
+      {/* Background Ambience Layer */}
+      <div className="absolute -right-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Header with Duration Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 relative z-10">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 rounded-full bg-amber-400 animate-ping" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
-            Missão Adaptativa do Dia • Meta {targetLevel}
+      {/* Top Banner Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-5 border-b border-white/10 relative z-10">
+        <div className="flex items-center gap-3">
+          <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold tracking-wider uppercase">
+            MISSÃO DE HOJE • NÍVEL {targetLevel}
+          </span>
+          <span className="text-xs text-zinc-400 font-mono flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            SuperMemo-2 Ativo
           </span>
         </div>
 
         {/* Time Selector */}
         <div className="flex items-center gap-1 bg-[#14141e] p-1 rounded-2xl border border-white/10 self-start sm:self-auto shadow-inner">
           <Clock className="w-3.5 h-3.5 text-amber-400 ml-2 mr-1" />
-          {[10, 20, 30, 45].map((mins) => (
+          {([10, 20, 30, 45] as const).map((mins) => (
             <button
               key={mins}
-              onClick={() => setDuration(mins as any)}
+              onClick={() => setDuration(mins)}
               className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                 duration === mins
                   ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/25"
@@ -95,7 +98,7 @@ export function MissionCard({
             <span>{isPlayingAudio ? "Ouvindo áudio..." : "Ouvir introdução de Sarah"}</span>
           </button>
           <span className="text-[11px] text-zinc-400 italic">
-            "Good morning! Let's practice explaining your project goals..."
+            &ldquo;Good morning! Let&apos;s practice explaining your project goals...&rdquo;
           </span>
         </div>
       </div>

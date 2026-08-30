@@ -4,18 +4,13 @@ import React, { useState, useEffect } from "react";
 import {
   TrendingUp,
   Award,
-  Clock,
-  Brain,
   Headphones,
-  CheckCircle2,
   Calendar,
-  Flame,
   ArrowRight,
   ShieldCheck,
   Zap,
 } from "lucide-react";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
@@ -29,7 +24,7 @@ export default function ProgressPage() {
   const [userLevel, setUserLevel] = useState<CEFRLevel>("B1+");
   const [totalXp, setTotalXp] = useState(1240);
 
-  const [radarData, setRadarData] = useState<SkillRadarData>({
+  const [radarData] = useState<SkillRadarData>({
     speaking: 74,
     vocabulary: 70,
     listening: 80,
@@ -37,6 +32,7 @@ export default function ProgressPage() {
     reading: 86,
     writing: 75,
   });
+
 
   useEffect(() => {
     async function loadProgressData() {
