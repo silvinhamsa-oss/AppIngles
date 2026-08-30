@@ -1123,61 +1123,70 @@ export default function SettingsPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Reconhecimento de Fala (Speech-to-Text)
                 </label>
-                <select
-                  value={sttProvider}
-                  onChange={(e) => setSttProvider(e.target.value)}
-                  className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="web-speech">Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
-                  <option value="whisper">OpenAI Whisper API</option>
-                  <option value="groq">Groq Whisper (Ultra Baixa Latência)</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={sttProvider}
+                    onChange={(e) => setSttProvider(e.target.value)}
+                    className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
+                  >
+                    <option value="web-speech">Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
+                    <option value="whisper">OpenAI Whisper API</option>
+                    <option value="groq">Groq Whisper (Ultra Baixa Latência)</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Síntese de Voz (Text-to-Speech)
                 </label>
                 {voicesLoaded ? (
                   <>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-zinc-300 font-mono">
                         Voz da Sarah (UK)
                       </label>
-                      <select
-                        value={sarahVoice ?? ""}
-                        onChange={(e) => setSarahVoice(e.target.value)}
-                        className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                      >
-                        <option value="">Automática (recomendado)</option>
-                        {availableVoices
-                          .filter(v => v.lang.startsWith("en-GB"))
-                          .map(voice => (
-                            <option key={voice.name} value={voice.name}>
-                              {voice.name} ({voice.lang})
-                            </option>
-                          ))}
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={sarahVoice ?? ""}
+                          onChange={(e) => setSarahVoice(e.target.value)}
+                          className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
+                        >
+                          <option value="">Automática (recomendado)</option>
+                          {availableVoices
+                            .filter(v => v.lang.startsWith("en-GB"))
+                            .map(voice => (
+                              <option key={voice.name} value={voice.name}>
+                                {voice.name} ({voice.lang})
+                              </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                      </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-zinc-300 font-mono">
                         Voz do Marcus (US)
                       </label>
-                      <select
-                        value={marcusVoice || ""}
-                        onChange={(e) => setMarcusVoice(e.target.value)}
-                        className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                      >
-                        <option value="">Automática (recomendado)</option>
-                        {availableVoices
-                          .filter(v => v.lang.startsWith("en-US"))
-                          .map(voice => (
-                            <option key={voice.name} value={voice.name}>
-                              {voice.name} ({voice.lang})
-                            </option>
-                          ))}
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={marcusVoice || ""}
+                          onChange={(e) => setMarcusVoice(e.target.value)}
+                          className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
+                        >
+                          <option value="">Automática (recomendado)</option>
+                          {availableVoices
+                            .filter(v => v.lang.startsWith("en-US"))
+                            .map(voice => (
+                              <option key={voice.name} value={voice.name}>
+                                {voice.name} ({voice.lang})
+                              </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5 pt-3">

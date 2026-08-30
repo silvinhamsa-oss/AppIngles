@@ -8,6 +8,7 @@ import {
   Play,
   Volume2,
   RotateCcw,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -261,19 +262,22 @@ export default function VocabularyPage() {
           </div>
 
           {/* Type Filter */}
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-[#14141e] border border-white/10 text-xs text-zinc-300 focus:outline-none cursor-pointer"
-          >
-            <option value="ALL">Todas as Classes</option>
-            <option value="verb">Verbos</option>
-            <option value="phrasal_verb">Phrasal Verbs</option>
-            <option value="noun">Substantivos</option>
-            <option value="adjective">Adjetivos</option>
-            <option value="connector">Conectivos</option>
-            <option value="idiom">Expressões / Idioms</option>
-          </select>
+          <div className="relative">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 rounded-xl bg-[#14141e] border border-white/10 text-xs text-zinc-300 focus:outline-none cursor-pointer hover:border-white/20 transition-colors"
+            >
+              <option value="ALL">Todas as Classes</option>
+              <option value="verb">Verbos</option>
+              <option value="phrasal_verb">Phrasal Verbs</option>
+              <option value="noun">Substantivos</option>
+              <option value="adjective">Adjetivos</option>
+              <option value="connector">Conectivos</option>
+              <option value="idiom">Expressões / Idioms</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 

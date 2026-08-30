@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Plus, BookPlus, Volume2 } from "lucide-react";
+import { X, Plus, BookPlus, Volume2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { VocabularyItem, PartOfSpeech } from "@/types/vocabulary";
@@ -112,37 +112,43 @@ export function AddWordModal({ isOpen, onClose, onAddWord }: AddWordModalProps) 
               <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Classe Gramatical
               </label>
-              <select
-                value={partOfSpeech}
-                onChange={(e) => setPartOfSpeech(e.target.value as PartOfSpeech)}
-                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-              >
-                <option value="verb">Verbo</option>
-                <option value="phrasal_verb">Phrasal Verb</option>
-                <option value="noun">Substantivo</option>
-                <option value="adjective">Adjetivo</option>
-                <option value="adverb">Advérbio</option>
-                <option value="connector">Conectivo</option>
-                <option value="idiom">Expressão Idiomática</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={partOfSpeech}
+                  onChange={(e) => setPartOfSpeech(e.target.value as PartOfSpeech)}
+                  className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 pr-8"
+                >
+                  <option value="verb">Verbo</option>
+                  <option value="phrasal_verb">Phrasal Verb</option>
+                  <option value="noun">Substantivo</option>
+                  <option value="adjective">Adjetivo</option>
+                  <option value="adverb">Advérbio</option>
+                  <option value="connector">Conectivo</option>
+                  <option value="idiom">Expressão Idiomática</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                 Nível CEFR
               </label>
-              <select
-                value={cefrLevel}
-                onChange={(e) => setCefrLevel(e.target.value as CEFRLevel)}
-                className="w-full rounded-2xl bg-[#14141e] border border-white/15 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-              >
-                <option value="A1">A1 (Iniciante)</option>
-                <option value="A2">A2 (Básico)</option>
-                <option value="B1">B1 (Intermediário)</option>
-                <option value="B1+">B1+ (Interm. Avançado)</option>
-                <option value="B2">B2 (Independente)</option>
-                <option value="C1">C1 (Avançado)</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={cefrLevel}
+                  onChange={(e) => setCefrLevel(e.target.value as CEFRLevel)}
+                  className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 pr-8"
+                >
+                  <option value="A1">A1 (Iniciante)</option>
+                  <option value="A2">A2 (Básico)</option>
+                  <option value="B1">B1 (Intermediário)</option>
+                  <option value="B1+">B1+ (Interm. Avançado)</option>
+                  <option value="B2">B2 (Independente)</option>
+                  <option value="C1">C1 (Avançado)</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 
