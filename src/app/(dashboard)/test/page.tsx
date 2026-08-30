@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   GraduationCap,
   Volume2,
@@ -10,6 +11,7 @@ import {
   ArrowRight,
   RotateCcw,
   Award,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -17,7 +19,6 @@ import { playPronunciation, startSpeechRecognition } from "@/lib/audio";
 import { CEFRLevel } from "@/types/profile";
 import confetti from "canvas-confetti";
 import { createClient } from "@/lib/supabase/client";
-
 
 interface Question {
   id: number;
@@ -82,7 +83,10 @@ const PLACEMENT_QUESTIONS: Question[] = [
   },
 ];
 
-export default function PlacementTestPage() {
+function PlacementTestContent() {
+  const searchParams = useSearchParams();
+  const isOnboarding = searchParams?.get("onboarding") === "true";
+
   const [currentStep, setCurrentStep] = useState<"intro" | "quiz" | "speaking" | "result">("intro");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -191,14 +195,17 @@ export default function PlacementTestPage() {
           </div>
 
           <div className="space-y-2">
-            <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase">
-              DIAGNÓSTICO CEFR EM 3 MINUTOS
+            <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase flex items-center gap-1.5 w-fit mx-auto">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isOnboarding ? "BOAS-VINDAS AO LAB • DIAGNÓSTICO INICIAL" : "DIAGNÓSTICO CEFR EM 3 MINUTOS"}</span>
             </span>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Teste de Nivelamento Interativo
+              {isOnboarding ? "Vamos calibrar seu nível de inglês!" : "Teste de Nivelamento Interativo"}
             </h1>
             <p className="text-sm text-zinc-300 max-w-lg mx-auto font-normal">
-              Descubra com precisão matemática em qual nível do <strong>A1 ao C2</strong> você ou seu filho estão para calibrar o tutor de IA e as missões diárias.
+              {isOnboarding
+                ? "Em apenas 3 minutos, descobrimos exatamente seu nível do A1 ao C2 para que suas conversas com o tutor de IA e missões diárias comecem no ponto ideal."
+                : "Descubra com precisão matemática em qual nível do A1 ao C2 você ou seu filho estão para calibrar o tutor de IA e as missões diárias."}
             </p>
           </div>
 
@@ -222,11 +229,24 @@ export default function PlacementTestPage() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-center">
-            <Button variant="gold" onClick={handleStartTest} className="px-8 py-3.5 text-xs font-black uppercase tracking-wider">
-              <span>Iniciar Teste de Nivelamento</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Button
+              variant="gold"
+              onClick={handleStartTest}
+              className="w-full sm:w-auto px-8 py-3.5 text-sm font-bold shadow-lg shadow-amber-500/20"
+            >
+              <span>{isOnboarding ? "Começar Calibração de Nível (3 min)" : "Iniciar Teste de Nivelamento (3 min)"}</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
+
+            {isOnboarding && (
+              <Link
+                href="/dashboard"
+                className="text-xs text-zinc-400 hover:text-white transition-colors py-2 px-4"
+              >
+                <span>Pular por enquanto e ir para o Painel (Definir B1) →</span>
+              </Link>
+            )}
           </div>
         </div>
       )}
@@ -417,5 +437,19 @@ export default function PlacementTestPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PlacementTestPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-12 text-center text-zinc-400 font-mono text-sm">
+          Carregando diagnóstico de nivelamento...
+        </div>
+      }
+    >
+      <PlacementTestContent />
+    </Suspense>
   );
 }

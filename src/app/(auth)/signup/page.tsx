@@ -58,9 +58,9 @@ export default function SignupPage() {
       if (data.session) {
         setFeedback({
           type: "success",
-          message: "Conta criada com sucesso! Redirecionando para o seu painel...",
+          message: "Conta criada com sucesso! Redirecionando para o teste de nivelamento inteligente...",
         });
-        router.push("/dashboard");
+        router.push("/test?onboarding=true");
         router.refresh();
       } else if (data.user) {
         // Se o Supabase exige confirmação de email

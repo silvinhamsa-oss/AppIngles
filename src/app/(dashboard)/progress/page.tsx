@@ -9,12 +9,14 @@ import {
   ArrowRight,
   ShieldCheck,
   Zap,
+  PenTool,
 } from "lucide-react";
 import { EnglishRadar } from "@/components/dashboard/EnglishRadar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { DictationPlayer } from "@/components/listening/DictationPlayer";
+import { WritingModal } from "@/components/learn/WritingModal";
 import { SkillRadarData, CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -37,6 +39,8 @@ export default function ProgressPage() {
     reading: 86,
     writing: 75,
   });
+
+  const [isWritingModalOpen, setIsWritingModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadProgressData() {
@@ -106,6 +110,7 @@ export default function ProgressPage() {
         tabs={[
           { id: "overview", label: "Visão Geral & Radar", icon: <TrendingUp className="w-4 h-4" /> },
           { id: "listening", label: "Laboratório de Escuta & Ditado", icon: <Headphones className="w-4 h-4" /> },
+          { id: "writing", label: "Laboratório de Escrita (Writing)", icon: <PenTool className="w-4 h-4" /> },
           { id: "history", label: "Histórico de Sessões", icon: <Calendar className="w-4 h-4" /> },
         ]}
         activeTab={activeTab}
@@ -212,6 +217,35 @@ export default function ProgressPage() {
         </div>
       )}
 
+      {activeTab === "writing" && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-2xl space-y-6 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-400/40 mx-auto flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/20">
+            <PenTool className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase">
+              AVALIAÇÃO DE REDAÇÃO & ENSAIOS COM IA
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white">Laboratório de Escrita Ativa</h3>
+            <p className="text-xs text-zinc-300 max-w-lg mx-auto font-normal">
+              Pratique redações e redações estruturadas para o nível <strong>{userLevel}</strong>. A IA avalia sua gramática, vocabulário e coesão com base nos critérios internacionais de Cambridge e IELTS.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-center">
+            <Button
+              variant="gold"
+              onClick={() => setIsWritingModalOpen(true)}
+              className="px-8 py-3.5 text-xs font-bold shadow-lg shadow-amber-500/20"
+            >
+              <PenTool className="w-4 h-4 mr-1.5" />
+              <span>Abrir Editor de Redação com IA</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {activeTab === "history" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-4 text-center">
           <Calendar className="w-10 h-10 text-amber-400 mx-auto" />
@@ -221,6 +255,13 @@ export default function ProgressPage() {
           </p>
         </div>
       )}
+
+      {/* Writing Modal */}
+      <WritingModal
+        isOpen={isWritingModalOpen}
+        onClose={() => setIsWritingModalOpen(false)}
+        initialLevel={userLevel}
+      />
     </div>
   );
 }

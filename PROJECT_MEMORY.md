@@ -78,7 +78,23 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 
 ---
 
-## 🧹 8. Qualidade de Código & Verificação
+---
+
+## ✍️ 9. Laboratório de Escrita Ativa & Onboarding Inteligente
+* **Laboratório de Escrita Ativa (`WritingModal.tsx`):**
+  - Prática de redações estruturadas para todos os níveis (A1 a C1) com temas cotidianos e profissionais.
+  - Contador de palavras dinâmico, meta de tamanho e diretrizes pedagógicas.
+  - Avaliação automatizada com IA via `/api/ai/chat`: nota CEFR, pontuação de gramática/vocabulário/coesão, correções frase a frase, versão reescrita nativa e extração de vocabulário avançado salvo com 1 toque no Supabase (`user_vocabulary`).
+  - Acessível a partir das páginas `/learn` (Trilha de Aulas) e `/progress` (Mapa de Fluência).
+* **Onboarding Inteligente com Diagnóstico Inicial (`/test?onboarding=true`):**
+  - Redirecionamento automático após criação de conta em `/signup`.
+  - Modo acolhedor com explicação clara do propósito da calibração.
+  - Opção de realizar o teste em 3 minutos ou pular direto para o painel (com nível B1 padrão).
+  - Persistência automática do nível CEFR testado e concessão de +100 XP no banco Supabase (`profiles`).
+
+---
+
+## 🧹 10. Qualidade de Código & Verificação
 * **ESLint:** 0 erros e 0 avisos.
 * **TypeScript:** Verificação estrita com `tsc --noEmit` (0 erros).
 * **Build Next.js (Turbopack):** 18 rotas compiladas com sucesso (100% de cobertura).

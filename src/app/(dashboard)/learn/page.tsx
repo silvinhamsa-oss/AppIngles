@@ -9,18 +9,22 @@ import {
   ShieldCheck,
   GraduationCap,
   Layers,
+  PenTool,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { LessonModal } from "@/components/learn/LessonModal";
 import { ExamSimulatorModal } from "@/components/learn/ExamSimulatorModal";
+import { WritingModal } from "@/components/learn/WritingModal";
 import { LEVEL_METADATA, CURRICULUM_LESSONS } from "@/lib/curriculum-data";
 import { LevelCategory, Lesson } from "@/types/curriculum";
+import { CEFRLevel } from "@/types/profile";
 
 export default function LearnPage() {
   const [selectedLevel, setSelectedLevel] = useState<LevelCategory>("B1");
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [isWritingModalOpen, setIsWritingModalOpen] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({
     a1_1: true,
   });
@@ -63,6 +67,15 @@ export default function LearnPage() {
             <GraduationCap className="w-4 h-4 text-amber-400" />
             <span>Fazer Teste de Nível (3 min)</span>
           </Link>
+
+          <Button
+            variant="outline"
+            onClick={() => setIsWritingModalOpen(true)}
+            className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-xs"
+          >
+            <PenTool className="w-4 h-4 mr-1.5 text-amber-400" />
+            <span>Laboratório de Escrita (Writing)</span>
+          </Button>
 
           <Button
             variant="gold"
@@ -207,6 +220,13 @@ export default function LearnPage() {
       <ExamSimulatorModal
         isOpen={isExamModalOpen}
         onClose={() => setIsExamModalOpen(false)}
+      />
+
+      {/* Writing Practice Lab Modal */}
+      <WritingModal
+        isOpen={isWritingModalOpen}
+        onClose={() => setIsWritingModalOpen(false)}
+        initialLevel={selectedLevel === "EXAM_PREP" ? "B2" : (selectedLevel as CEFRLevel)}
       />
     </div>
   );

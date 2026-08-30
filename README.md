@@ -19,15 +19,25 @@
 - **OpenRouter, OpenAI, Google Gemini, Anthropic Claude, Ollama Local e Provedores Customizados.**
 - **Persistência das Chaves:** Suas chaves de API ficam salvas de forma segura no Supabase e não são perdidas após novos deploys.
 
-### 3. 🧠 Vocabulário & Active Recall (`/vocabulary`)
+### 3. ✍️ Laboratório de Escrita Ativa (`/learn` e `/progress`)
+- **Redações Guiadas A1-C1:** Temas do cotidiano e ensaios analíticos profissionais.
+- **Avaliação em Tempo Real com IA:** Pontuação CEFR, notas de gramática, vocabulário e coesão baseadas nos critérios de Cambridge/IELTS.
+- **Feedback Detalhado:** Correções frase a frase e versão reescrita 100% nativa com salvamento de novos termos nos Flashcards.
+
+### 4. 🎓 Teste de Nivelamento & Onboarding Inteligente (`/test`)
+- **Calibração em 3 Minutos:** Quiz de gramática/vocabulário + 30 segundos de fala espontânea com o microfone.
+- **Onboarding Automático:** Novos alunos são guiados para o teste logo após o cadastro para personalizar missões e o tom do tutor de IA.
+- **Persistência Instantânea:** O nível CEFR e os +100 XP são salvos no perfil do Supabase.
+
+### 5. 🧠 Vocabulário & Active Recall (`/vocabulary`)
 - **Algoritmo SuperMemo-2 (SM-2):** Repetição espaçada baseada na sua facilidade de lembrança.
 - **Pronúncia em Áudio:** Ouça a pronúncia nativa de qualquer palavra ou frase com 1 clique.
 - **Classificação CEFR:** Cards organizados por níveis (A1, A2, B1, B2, C1, C2).
 
-### 4. 📱 Progressive Web App (PWA) & Mobile UX
+### 6. 📱 Progressive Web App (PWA) & Mobile UX
 - **Instalação Nativa:** Instale no Android, iPhone/iPad (iOS) ou Computador (Windows/Mac) diretamente do navegador.
 - **Modo Standalone:** Abre sem a barra de navegação do browser, com ícones oficiais e tela cheia.
-- **Menu Inferior Mobile Adaptativo:** Barra inferior com 6 abas essenciais (*Início, Aprender, Conversar flutuante central, Vocab, Progresso e Ajustes*), suporte a safe-area de iPhones e micro-animações de toque.
+- **Menu Inferior Mobile Adaptativo:** Barra inferior simétrica com 5 abas essenciais e botão central destacado para conversar.
 - **Modais e Chat com Rolagem Fluida:** Seletores de cenários e visualizador de mensagens otimizados com `100dvh` para telas de celulares.
 - **Service Worker & Cache Offline:** Carregamento instantâneo de assets estáticos e funcionamento offline para revisão.
 
