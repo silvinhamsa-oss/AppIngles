@@ -384,39 +384,39 @@ export default function TalkPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex flex-col space-y-3 max-w-5xl mx-auto">
+    <div className="h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto">
       {/* Studio Audio Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Persona selector toggle */}
           <button
             onClick={() => setPersona(persona === "sarah" ? "marcus" : "sarah")}
-            className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer shrink-0"
             title="Alternar entre Sarah (UK) e Marcus (US)"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
               {persona === "sarah" ? "GB" : "US"}
             </div>
-            <div className="text-left hidden sm:block pr-2">
-              <div className="text-xs font-bold text-white leading-tight">
+            <div className="text-left hidden xs:block sm:block pr-1 sm:pr-2">
+              <div className="text-[11px] sm:text-xs font-bold text-white leading-tight">
                 {persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}
               </div>
-              <div className="text-[10px] text-zinc-400">Clique p/ trocar</div>
+              <div className="text-[9px] sm:text-[10px] text-zinc-400">Clique p/ trocar</div>
             </div>
           </button>
 
           {/* Topic Selector Button */}
           <button
             onClick={() => setIsTopicModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group min-w-0"
           >
-            <Layers className="w-4 h-4 text-amber-400 group-hover:scale-110" />
-            <div>
-              <div className="text-xs font-bold text-white flex items-center gap-1">
-                <span>{selectedTopic.title}</span>
-                <ChevronDown className="w-3 h-3 text-zinc-400" />
+            <Layers className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110" />
+            <div className="min-w-0">
+              <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1">
+                <span className="truncate max-w-[100px] xs:max-w-[140px] sm:max-w-none">{selectedTopic.title}</span>
+                <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
               </div>
-              <div className="text-[10px] text-zinc-400 font-mono">
+              <div className="text-[9px] sm:text-[10px] text-zinc-400 font-mono truncate">
                 Nível {selectedTopic.level} • {selectedTopic.mode}
               </div>
             </div>
@@ -424,9 +424,9 @@ export default function TalkPage() {
         </div>
 
         {/* Timer, Live Visualizer and Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Active Speaking Timer */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs font-mono font-bold">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 text-white text-[11px] sm:text-xs font-mono font-bold">
             <Clock className="w-3.5 h-3.5 text-amber-400" />
             <span>{formatTimer(secondsElapsed)}</span>
           </div>
@@ -436,7 +436,7 @@ export default function TalkPage() {
           {/* Audio Auto-Play / Mute Button */}
           <button
             onClick={handleToggleMute}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               autoPlayAudio
                 ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm shadow-amber-500/10"
                 : "bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200"
@@ -460,7 +460,7 @@ export default function TalkPage() {
             variant="outline"
             size="sm"
             onClick={handleForgotWord}
-            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden sm:flex"
+            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden md:flex"
           >
             <HelpCircle className="w-3.5 h-3.5 mr-1" />
             <span>Esqueci a palavra</span>
@@ -470,10 +470,10 @@ export default function TalkPage() {
           <button
             onClick={handleEndSession}
             disabled={isEvaluating || messages.length <= 1}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-[11px] sm:text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 active:scale-95"
           >
             <Award className="w-3.5 h-3.5" />
-            <span>{isEvaluating ? "Gerando..." : "Concluir"}</span>
+            <span>{isEvaluating ? "..." : "Concluir"}</span>
           </button>
         </div>
       </div>
@@ -487,18 +487,18 @@ export default function TalkPage() {
       )}
 
       {/* Main Conversation Stream */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 rounded-3xl bg-[#09090e] border border-white/10 shadow-2xl flex flex-col justify-between">
-        <div className="space-y-4">
+      <div className="flex-1 overflow-hidden p-3 sm:p-5 rounded-3xl bg-[#09090e] border border-white/10 shadow-2xl flex flex-col justify-between min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-1 scroll-smooth">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex items-start gap-3.5 ${
+              className={`flex items-start gap-2.5 sm:gap-3.5 ${
                 msg.sender === "user" ? "flex-row-reverse" : "flex-row"
               }`}
             >
               {/* Avatar */}
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                   msg.sender === "user"
                     ? "bg-[#181822] text-white border border-white/15"
                     : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
@@ -509,13 +509,13 @@ export default function TalkPage() {
 
               {/* Speech Bubble */}
               <div
-                className={`max-w-xl rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${
+                className={`max-w-[85%] sm:max-w-xl rounded-2xl px-3.5 sm:px-5 py-2.5 sm:py-3.5 text-xs sm:text-sm leading-relaxed ${
                   msg.sender === "user"
                     ? "bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 font-bold rounded-tr-none shadow-lg shadow-amber-500/20"
                     : "bg-[#13131b] border border-white/10 text-white rounded-tl-none"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2.5">
                   {msg.content ? (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   ) : isGenerating && msg.id === messages[messages.length - 1].id ? (
@@ -535,7 +535,7 @@ export default function TalkPage() {
                     <button
                       type="button"
                       onClick={() => handleSpeakText(msg.content, msg.id)}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5 ${
+                      className={`p-1 sm:p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5 ${
                         playingMessageId === msg.id && isAiSpeaking
                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                           : "text-zinc-400 hover:text-amber-300 hover:bg-white/5"
@@ -547,7 +547,7 @@ export default function TalkPage() {
                   )}
                 </div>
                 <div
-                  className={`text-[10px] mt-2 font-mono ${
+                  className={`text-[9px] sm:text-[10px] mt-1.5 font-mono ${
                     msg.sender === "user" ? "text-zinc-950/70" : "text-zinc-500"
                   }`}
                 >
@@ -560,18 +560,18 @@ export default function TalkPage() {
         </div>
 
         {/* Input Bar with Speech-to-Text */}
-        <form onSubmit={handleSendMessage} className="pt-4 border-t border-white/10 flex items-center gap-2">
+        <form onSubmit={handleSendMessage} className="pt-3 sm:pt-4 border-t border-white/10 flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={toggleRecording}
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+            className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shrink-0 ${
               isRecording
                 ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
                 : "bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 hover:text-amber-300"
             }`}
             title={isRecording ? "Stop Recording" : "Speak in English (Speech-to-Text)"}
           >
-            {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            {isRecording ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
 
           <input
@@ -581,12 +581,12 @@ export default function TalkPage() {
                 ? "Listening to you speak in English..."
                 : isGenerating
                 ? `${persona === "sarah" ? "Sarah" : "Marcus"} is thinking...`
-                : "Type in English or tap the microphone to speak..."
+                : "Type in English or tap mic to speak..."
             }
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             disabled={isGenerating}
-            className="flex-1 bg-[#13131b] border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40"
+            className="flex-1 min-w-0 bg-[#13131b] border border-white/10 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40"
           />
 
           <Button
@@ -595,6 +595,7 @@ export default function TalkPage() {
             size="icon"
             disabled={!inputMessage.trim() || isGenerating}
             isLoading={isGenerating}
+            className="shrink-0 w-10 h-10 sm:w-11 sm:h-11"
           >
             <Send className="w-4 h-4" />
           </Button>
@@ -603,20 +604,30 @@ export default function TalkPage() {
 
       {/* Topic Selection Modal */}
       {isTopicModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-2xl rounded-3xl bg-[#0b0b10] border border-amber-500/40 p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-3xl bg-[#0b0b10] border border-amber-500/40 shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#0e0e16]">
               <div>
-                <h3 className="text-lg font-bold text-white">Selecione o Tema ou Cenário de Treino</h3>
-                <p className="text-xs text-zinc-400">Escolha o tópico para guiar as perguntas do seu tutor de IA.</p>
+                <h3 className="text-base sm:text-lg font-bold text-white">Selecione o Tema ou Cenário</h3>
+                <p className="text-[11px] sm:text-xs text-zinc-400">Escolha o tópico para guiar as perguntas do seu tutor de IA.</p>
               </div>
-              <button onClick={() => setIsTopicModalOpen(false)} className="text-zinc-400 hover:text-white">✕</button>
+              <button
+                type="button"
+                onClick={() => setIsTopicModalOpen(false)}
+                className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <TopicSelector
-              selectedTopicId={selectedTopic.id}
-              onSelectTopic={handleSelectTopic}
-            />
+            {/* Modal Scrollable Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3">
+              <TopicSelector
+                selectedTopicId={selectedTopic.id}
+                onSelectTopic={handleSelectTopic}
+              />
+            </div>
           </div>
         </div>
       )}
