@@ -35,13 +35,29 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      // If biometrics was already registered for this email, refresh its cached session tokens
+      if (data.session) {
+        const registeredEmail = localStorage.getItem("english-lab-biometric-email");
+        if (registeredEmail === email) {
+          localStorage.setItem(
+            "english-lab-biometric-tokens",
+            JSON.stringify({
+              email,
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+              registeredAt: new Date().toISOString(),
+            })
+          );
+        }
       }
 
       setFeedback({ type: "success", message: "Login realizado com sucesso! Entrando no painel..." });
@@ -75,6 +91,28 @@ export default function LoginPage() {
       const res = await authenticateWithBiometrics();
       if (res.success && res.userEmail) {
         const supabase = createClient();
+
+        // 1. Try to restore session directly via tokens if available
+        if (res.tokens?.access_token && res.tokens?.refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: res.tokens.access_token,
+            refresh_token: res.tokens.refresh_token,
+          });
+
+          if (!error && data.session) {
+            setFeedback({
+              type: "success",
+              message: "Identidade biométrica confirmada! Entrando...",
+            });
+            const searchParams = new URLSearchParams(window.location.search);
+            const nextUrl = searchParams.get("next") || "/dashboard";
+            router.push(nextUrl);
+            router.refresh();
+            return;
+          }
+        }
+
+        // 2. Check if active session already exists in cookies
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -91,9 +129,9 @@ export default function LoginPage() {
         } else {
           setEmail(res.userEmail);
           setFeedback({
-            type: "error",
+            type: "success",
             message:
-              "Biometria validada. Por favor, insira sua senha para revalidar a sessão com segurança.",
+              "Biometria validada! Insira sua senha uma vez para vincular e ativar o login biométrico definitivo.",
           });
           setIsBiometricLoading(false);
         }

@@ -18,11 +18,19 @@ import {
   Zap,
   ChevronDown,
   Check,
+  Fingerprint,
+  Shield,
 } from "lucide-react";
 import { AIProviderType } from "@/types/ai";
 import { CEFRLevel } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
 import { saveVoicePreferences, loadVoicePreferences } from "@/lib/audio";
+import {
+  isBiometricsAvailable,
+  isBiometricsRegistered,
+  registerBiometrics,
+  clearBiometrics,
+} from "@/lib/biometrics";
 
 function getSavedAIConfig() {
   if (typeof window === "undefined") return null;
@@ -93,6 +101,17 @@ export default function SettingsPage() {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
+
+  // Biometrics States
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioRegistered, setBioRegistered] = useState(false);
+  const [isRegisteringBio, setIsRegisteringBio] = useState(false);
+  const [bioFeedback, setBioFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    isBiometricsAvailable().then((avail) => setBioAvailable(avail));
+    setBioRegistered(isBiometricsRegistered());
+  }, []);
 
   useEffect(() => {
     async function loadUserProfileAndAIConfig() {
@@ -464,6 +483,40 @@ export default function SettingsPage() {
 
     setVoiceSaveSuccess(true);
     setTimeout(() => setVoiceSaveSuccess(false), 3000);
+  };
+
+  const handleToggleBiometrics = async () => {
+    if (bioRegistered) {
+      clearBiometrics();
+      setBioRegistered(false);
+      setBioFeedback({ type: "success", message: "Biometria desativada com sucesso para este aparelho." });
+      setTimeout(() => setBioFeedback(null), 3500);
+    } else {
+      setIsRegisteringBio(true);
+      setBioFeedback(null);
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await registerBiometrics(
+          email || "aluno@englishlab.app",
+          session ? { access_token: session.access_token, refresh_token: session.refresh_token } : undefined
+        );
+        if (res.success) {
+          setBioRegistered(true);
+          setBioFeedback({ type: "success", message: res.message });
+        } else {
+          setBioFeedback({ type: "error", message: res.message });
+        }
+      } catch (err: unknown) {
+        setBioFeedback({
+          type: "error",
+          message: err instanceof Error ? err.message : "Erro ao cadastrar biometria.",
+        });
+      } finally {
+        setIsRegisteringBio(false);
+        setTimeout(() => setBioFeedback(null), 4000);
+      }
+    }
   };
 
   return (
@@ -871,6 +924,70 @@ export default function SettingsPage() {
               <span>Salvar Alterações do Perfil</span>
             </Button>
           </form>
+
+          {/* Biometrics & Passkeys Security Card */}
+          <div className="pt-6 border-t border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Fingerprint className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>Biometria & Face ID</span>
+                    {bioRegistered ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        ✓ Ativado
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase font-mono bg-[#181824] text-zinc-400 border border-white/10">
+                        Não cadastrado
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Faça login instantâneo com 1 toque no celular usando Face ID, Touch ID ou leitor de digital.
+                  </p>
+                </div>
+              </div>
+
+              {bioAvailable && (
+                <Button
+                  type="button"
+                  variant={bioRegistered ? "outline" : "gold"}
+                  onClick={handleToggleBiometrics}
+                  isLoading={isRegisteringBio}
+                  className="text-xs shrink-0"
+                >
+                  <Fingerprint className="w-4 h-4 mr-1.5" />
+                  <span>{bioRegistered ? "Desativar Biometria" : "Ativar neste Aparelho"}</span>
+                </Button>
+              )}
+            </div>
+
+            {!bioAvailable && (
+              <div className="p-3 rounded-2xl bg-[#14141e] border border-white/10 text-xs text-zinc-400">
+                ℹ️ O leitor biométrico nativo (WebAuthn) não está disponível neste navegador ou exige conexão segura HTTPS.
+              </div>
+            )}
+
+            {bioFeedback && (
+              <div
+                className={`p-3.5 rounded-2xl border text-xs flex items-center gap-2.5 shadow-lg ${
+                  bioFeedback.type === "success"
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                    : "bg-red-500/15 border-red-500/40 text-red-300"
+                }`}
+              >
+                {bioFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                )}
+                <span>{bioFeedback.message}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
