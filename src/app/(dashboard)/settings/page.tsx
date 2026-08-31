@@ -29,7 +29,7 @@ import {
 import { AIProviderType } from "@/types/ai";
 import { CEFRLevel, SkillRadarData } from "@/types/profile";
 import { createClient } from "@/lib/supabase/client";
-import { saveVoicePreferences, loadVoicePreferences } from "@/lib/audio";
+import { saveVoicePreferences, loadVoicePreferences, playPronunciation } from "@/lib/audio";
 import { FluencyReportModal } from "@/components/settings/FluencyReportModal";
 import {
   isBiometricsAvailable,
@@ -1318,16 +1318,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                            window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance("Hello! I am Sarah, your British English tutor. Nice to speak with you.");
-                            utterance.lang = "en-GB";
-                            if (sarahVoice) {
-                              const found = window.speechSynthesis.getVoices().find(v => v.name === sarahVoice);
-                              if (found) utterance.voice = found;
-                            }
-                            window.speechSynthesis.speak(utterance);
-                          }
+                          playPronunciation("Hello! I am Sarah, your British English tutor. Nice to speak with you.", 0.95, "en-GB", "sarah");
                         }}
                         className="w-full py-2 px-3 rounded-xl bg-black/40 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                       >
@@ -1346,7 +1337,7 @@ export default function SettingsPage() {
                             </div>
                             <div>
                               <h3 className="text-sm font-bold text-white leading-tight">Marcus (Tutor US)</h3>
-                              <p className="text-[10px] text-zinc-400">Inglês Americano</p>
+                              <p className="text-[10px] text-zinc-400">Inglês Americano (Voz Masculina)</p>
                             </div>
                           </div>
                           {marcusVoice && (
@@ -1366,7 +1357,7 @@ export default function SettingsPage() {
                               onChange={(e) => setMarcusVoice(e.target.value || null)}
                               className="w-full appearance-none rounded-xl bg-[#0d0d14] border border-white/15 px-3 py-2.5 pr-8 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
                             >
-                              <option value="">✨ Automática (Recomendada pelo Sistema)</option>
+                              <option value="">✨ Automática (Masculina Recomendada)</option>
                               
                               {/* US Voices */}
                               {availableVoices.filter(v => v.lang.toLowerCase().replace("_", "-").startsWith("en-us") || v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("american")).length > 0 && (
@@ -1413,16 +1404,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                            window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance("Hey, what's up? I'm Marcus, your American English coach. Let's do this!");
-                            utterance.lang = "en-US";
-                            if (marcusVoice) {
-                              const found = window.speechSynthesis.getVoices().find(v => v.name === marcusVoice);
-                              if (found) utterance.voice = found;
-                            }
-                            window.speechSynthesis.speak(utterance);
-                          }
+                          playPronunciation("Hey, what's up? I'm Marcus, your American English coach. Let's do this!", 0.95, "en-US", "marcus");
                         }}
                         className="w-full py-2 px-3 rounded-xl bg-black/40 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                       >

@@ -80,31 +80,76 @@ export function playPronunciation(
     const isUK = lang.toLowerCase().includes("gb") || persona === "sarah";
 
     if (isUK) {
+      // Sarah: Prioritize British Female Voices
       selectedVoice =
+        voices.find(
+          (v) =>
+            (v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
+              v.name.toLowerCase().includes("uk") ||
+              v.name.toLowerCase().includes("british")) &&
+            (v.name.toLowerCase().includes("female") ||
+              v.name.toLowerCase().includes("hazel") ||
+              v.name.toLowerCase().includes("susan") ||
+              v.name.toLowerCase().includes("sonia") ||
+              v.name.toLowerCase().includes("libby") ||
+              v.name.toLowerCase().includes("serena") ||
+              v.name.toLowerCase().includes("kate") ||
+              v.name.toLowerCase().includes("jenny"))
+        ) ??
         voices.find(
           (v) =>
             v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
             v.name.toLowerCase().includes("uk") ||
-            v.name.toLowerCase().includes("british") ||
-            v.name.toLowerCase().includes("george") ||
-            v.name.toLowerCase().includes("hazel") ||
-            v.name.toLowerCase().includes("susan")
+            v.name.toLowerCase().includes("british")
+        ) ??
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith("en") &&
+            (v.name.toLowerCase().includes("female") ||
+              v.name.toLowerCase().includes("zira") ||
+              v.name.toLowerCase().includes("samantha") ||
+              v.name.toLowerCase().includes("jenny") ||
+              v.name.toLowerCase().includes("aria"))
         ) ??
         voices.find((v) => v.lang.toLowerCase().startsWith("en")) ??
         null;
     } else {
+      // Marcus: Prioritize American Male Voices
       selectedVoice =
         voices.find(
           (v) =>
-            v.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
-            v.name.toLowerCase().includes("us") ||
-            v.name.toLowerCase().includes("american") ||
-            v.name.toLowerCase().includes("natural") ||
-            v.name.toLowerCase().includes("google") ||
-            v.name.toLowerCase().includes("david") ||
-            v.name.toLowerCase().includes("mark") ||
-            v.name.toLowerCase().includes("guy") ||
-            v.name.toLowerCase().includes("samantha")
+            (v.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
+              v.name.toLowerCase().includes("us") ||
+              v.name.toLowerCase().includes("american")) &&
+            (v.name.toLowerCase().includes("david") ||
+              v.name.toLowerCase().includes("guy") ||
+              v.name.toLowerCase().includes("mark") ||
+              v.name.toLowerCase().includes("george") ||
+              v.name.toLowerCase().includes("male") ||
+              v.name.toLowerCase().includes("alex") ||
+              v.name.toLowerCase().includes("daniel") ||
+              v.name.toLowerCase().includes("ryan") ||
+              v.name.toLowerCase().includes("eric") ||
+              v.name.toLowerCase().includes("tom") ||
+              v.name.toLowerCase().includes("christopher"))
+        ) ??
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith("en") &&
+            (v.name.toLowerCase().includes("david") ||
+              v.name.toLowerCase().includes("guy") ||
+              v.name.toLowerCase().includes("mark") ||
+              v.name.toLowerCase().includes("male") ||
+              v.name.toLowerCase().includes("alex") ||
+              v.name.toLowerCase().includes("daniel"))
+        ) ??
+        voices.find(
+          (v) =>
+            (v.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
+              v.name.toLowerCase().includes("us")) &&
+            !v.name.toLowerCase().includes("female") &&
+            !v.name.toLowerCase().includes("zira") &&
+            !v.name.toLowerCase().includes("samantha")
         ) ??
         voices.find((v) => v.lang.toLowerCase().startsWith("en")) ??
         null;
