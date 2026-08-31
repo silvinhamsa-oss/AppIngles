@@ -483,41 +483,41 @@ export default function TalkPage() {
           : "h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto w-full min-h-0"
       }
     >
-      {/* Studio Header: Clean, Perfectly Contained 2-Tier Modular Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-xl space-y-3 shrink-0">
+      {/* Studio Header: 100% Contained, Responsive & Unbreakable Bar */}
+      <div className="w-full rounded-2xl bg-[#0d0d14] border border-amber-500/30 shadow-xl p-3 sm:p-3.5 space-y-2.5 shrink-0 overflow-hidden">
         {/* Tier 1: Persona, Topic and Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="w-full flex flex-wrap items-center justify-between gap-2 min-w-0">
           {/* Left: Persona Switcher & Topic Selector */}
-          <div className="flex items-center gap-2 min-w-0 flex-wrap xs:flex-nowrap">
+          <div className="flex items-center gap-2 min-w-0 flex-1 max-w-full">
             {/* Persona toggle */}
             <button
               onClick={() => setPersona(persona === "sarah" ? "marcus" : "sarah")}
-              className="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-xl sm:rounded-2xl bg-black/60 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer shrink-0 active:scale-95 shadow-inner"
+              className="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer shrink-0 active:scale-95 shadow-inner"
               title="Alternar entre Sarah (UK) e Marcus (US)"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs shadow-sm">
                 {persona === "sarah" ? "GB" : "US"}
               </div>
-              <div className="text-left hidden xs:block pr-1 sm:pr-2">
-                <div className="text-[11px] sm:text-xs font-bold text-white leading-tight">
+              <div className="text-left hidden xs:block pr-1.5">
+                <div className="text-[11px] font-bold text-white leading-tight">
                   {persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}
                 </div>
-                <div className="text-[9px] sm:text-[10px] text-zinc-400">Trocar tutor</div>
+                <div className="text-[9px] text-zinc-400">Trocar tutor</div>
               </div>
             </button>
 
             {/* Topic Selector Button */}
             <button
               onClick={() => setIsTopicModalOpen(true)}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group min-w-0 max-w-[150px] xs:max-w-[200px] sm:max-w-xs active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group min-w-0 max-w-[140px] xs:max-w-[180px] sm:max-w-xs flex-1 active:scale-95"
             >
-              <Layers className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110" />
+              <Layers className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110" />
               <div className="min-w-0 flex-1">
                 <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1">
                   <span className="truncate">{selectedTopic.title}</span>
                   <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
                 </div>
-                <div className="text-[9px] sm:text-[10px] text-zinc-400 font-mono truncate">
+                <div className="text-[9px] text-zinc-400 font-mono truncate">
                   Nível {selectedTopic.level}
                 </div>
               </div>
@@ -527,21 +527,21 @@ export default function TalkPage() {
             <button
               type="button"
               onClick={() => setIsCustomScenarioOpen(true)}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-xl sm:rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shrink-0 active:scale-95"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shrink-0 active:scale-95"
               title="Criar Cenário Customizado com IA"
             >
               <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Criar Cenário</span>
+              <span>Cenário</span>
             </button>
           </div>
 
           {/* Right: Actions (Focus/Expand Mode, Export, Finish) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
             {/* Focus Mode / Fullscreen Button (Esticar Tela) */}
             <button
               type="button"
               onClick={() => setIsFocusMode(!isFocusMode)}
-              className={`h-8 px-2.5 sm:px-3 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 active:scale-95 ${
+              className={`h-7.5 sm:h-8 px-2 sm:px-2.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer shrink-0 active:scale-95 ${
                 isFocusMode
                   ? "bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/30 font-bold text-xs"
                   : "bg-white/5 hover:bg-white/10 text-amber-300 hover:text-white border-white/15 text-xs hover:border-amber-400/40"
@@ -551,12 +551,12 @@ export default function TalkPage() {
               {isFocusMode ? (
                 <>
                   <Minimize2 className="w-3.5 h-3.5 shrink-0 text-zinc-950" />
-                  <span className="font-semibold text-xs">Reduzir</span>
+                  <span className="font-semibold text-xs hidden xs:inline">Reduzir</span>
                 </>
               ) : (
                 <>
                   <Maximize2 className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                  <span className="font-semibold text-xs">Esticar</span>
+                  <span className="font-semibold text-xs hidden xs:inline">Esticar</span>
                 </>
               )}
             </button>
@@ -566,7 +566,7 @@ export default function TalkPage() {
               type="button"
               onClick={handleExportChatHistory}
               disabled={messages.length <= 1}
-              className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-30 shrink-0 active:scale-95"
+              className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-30 shrink-0 active:scale-95"
               title="Exportar Conversa em Markdown (.MD)"
             >
               <Download className="w-3.5 h-3.5" />
@@ -576,7 +576,7 @@ export default function TalkPage() {
             <button
               onClick={handleEndSession}
               disabled={isEvaluating || messages.length <= 1}
-              className="h-8 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 active:scale-95 shrink-0"
+              className="h-7.5 sm:h-8 px-2.5 sm:px-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 active:scale-95 shrink-0"
             >
               <Award className="w-3.5 h-3.5" />
               <span>{isEvaluating ? "..." : "Concluir"}</span>
@@ -584,31 +584,31 @@ export default function TalkPage() {
           </div>
         </div>
 
-        {/* Tier 2: Status & Audio Controls (Clean and properly contained) */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
-          <div className="flex items-center gap-2 min-w-0">
+        {/* Tier 2: Status & Audio Controls (Clean, Wrap-safe, Guaranteed Inside Card) */}
+        <div className="w-full flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             {/* Active Speaking Timer */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/50 border border-white/10 text-white text-xs font-mono font-bold shrink-0">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/50 border border-white/10 text-white text-xs font-mono font-bold shrink-0">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
               <span>{formatTimer(secondsElapsed)}</span>
             </div>
 
             {/* Live Audio Visualizer */}
-            <div className="flex items-center gap-2 px-2 py-0.5 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/5 shrink-0">
               <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
-              <span className="text-[10px] font-mono text-zinc-400 hidden xs:inline">
+              <span className="text-[10px] font-mono text-zinc-400 hidden sm:inline">
                 {isAiSpeaking ? "Tutor falando" : isRecording ? "Gravando voz" : isGenerating ? "Pensando" : "Pronto"}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
             {/* Forgot word helper */}
             <Button
               variant="outline"
               size="sm"
               onClick={handleForgotWord}
-              className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-[11px] sm:text-xs h-7 px-2"
+              className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-[11px] h-7 px-2"
             >
               <HelpCircle className="w-3 h-3 mr-1" />
               <span>Dica</span>
