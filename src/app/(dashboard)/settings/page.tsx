@@ -107,9 +107,11 @@ export default function SettingsPage() {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
-  const [testingVoiceName, setTestingVoiceName] = useState<string | null>(null);
-  const [voiceSearchQuery, setVoiceSearchQuery] = useState("");
-  const [voiceFilterCategory, setVoiceFilterCategory] = useState<"all" | "uk" | "us" | "other_en" | "system">("all");
+  const [isReloadingVoices, setIsReloadingVoices] = useState(false);
+  const [voiceReloadFeedback, setVoiceReloadFeedback] = useState(false);
+  const [customTestVoice, setCustomTestVoice] = useState<string>("");
+  const [customTestText, setCustomTestText] = useState("Hello! Welcome to English Lab. How is your pronunciation practice going today?");
+  const [isPlayingCustomTest, setIsPlayingCustomTest] = useState(false);
 
   // Biometrics States
   const [bioAvailable, setBioAvailable] = useState(false);
@@ -529,48 +531,60 @@ export default function SettingsPage() {
     setTimeout(() => setVoiceSaveSuccess(false), 3000);
   };
 
-  const handleTestSingleVoice = (voice: SpeechSynthesisVoice) => {
+  const handleReloadVoices = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    setIsReloadingVoices(true);
     window.speechSynthesis.cancel();
 
-    if (testingVoiceName === voice.name) {
-      setTestingVoiceName(null);
+    try {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        setAvailableVoices(voices);
+        setVoicesLoaded(true);
+      }
+    } catch {}
+
+    setTimeout(() => {
+      try {
+        const refreshed = window.speechSynthesis.getVoices();
+        if (refreshed && refreshed.length > 0) {
+          setAvailableVoices(refreshed);
+        }
+      } catch {}
+      setIsReloadingVoices(false);
+      setVoiceReloadFeedback(true);
+      setTimeout(() => setVoiceReloadFeedback(false), 2500);
+    }, 400);
+  };
+
+  const handlePlayCustomTest = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    if (isPlayingCustomTest) {
+      window.speechSynthesis.cancel();
+      setIsPlayingCustomTest(false);
       return;
     }
 
-    setTestingVoiceName(voice.name);
-    const isUK =
-      voice.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
-      voice.name.toLowerCase().includes("uk") ||
-      voice.name.toLowerCase().includes("british");
-    const isUS =
-      voice.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
-      voice.name.toLowerCase().includes("us") ||
-      voice.name.toLowerCase().includes("american");
+    window.speechSynthesis.cancel();
+    setIsPlayingCustomTest(true);
 
-    const samplePhrase = isUK
-      ? `Hello! This is a test sample of ${voice.name} in British English.`
-      : isUS
-      ? `Hey there! This is a test sample of ${voice.name} in American English.`
-      : `Hello! Testing ${voice.name} (${voice.lang}). Welcome to English Lab!`;
-
-    const utterance = new SpeechSynthesisUtterance(samplePhrase);
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
+    const textToSpeak = customTestText.trim() || "Hello! Testing this voice in English.";
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 0.95;
 
-    utterance.onend = () => setTestingVoiceName(null);
-    utterance.onerror = () => setTestingVoiceName(null);
+    if (customTestVoice) {
+      const found = availableVoices.find((v) => v.name === customTestVoice);
+      if (found) {
+        utterance.voice = found;
+        utterance.lang = found.lang;
+      }
+    }
+
+    utterance.onend = () => setIsPlayingCustomTest(false);
+    utterance.onerror = () => setIsPlayingCustomTest(false);
 
     window.speechSynthesis.speak(utterance);
-  };
-
-  const handleAssignVoice = (voiceName: string, target: "sarah" | "marcus") => {
-    if (target === "sarah") {
-      setSarahVoice(voiceName);
-    } else {
-      setMarcusVoice(voiceName);
-    }
   };
 
   const handleToggleBiometrics = async () => {
@@ -1184,23 +1198,36 @@ export default function SettingsPage() {
       {/* TAB 3: VOICE CONFIG */}
       {activeTab === "voice" && (
         <div className="p-6 sm:p-8 rounded-3xl bg-[#0d0d14] border border-white/10 shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-white">Configurações de Fala & Áudio</h2>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Preferências de reconhecimento de fala (STT) e sintetizadores de voz (TTS).
+                Defina o reconhecimento de voz (STT) e os sintetizadores de voz para os tutores de conversação.
               </p>
             </div>
-            {voicesLoaded && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{availableVoices.length} vozes detectadas no sistema</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleReloadVoices}
+                disabled={isReloadingVoices}
+                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1.5 cursor-pointer font-mono transition-all active:scale-95 disabled:opacity-50"
+                title="Detectar novamente todas as vozes instaladas no computador"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isReloadingVoices ? "animate-spin text-amber-400" : ""}`} />
+                <span>{isReloadingVoices ? "Detectando..." : voiceReloadFeedback ? "✓ Vozes Atualizadas!" : "Recarregar Vozes"}</span>
+              </button>
+              {voicesLoaded && (
+                <div className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{availableVoices.length} vozes</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <form onSubmit={handleSaveVoiceConfig} className="space-y-6">
             <div className="space-y-4">
+              {/* STT Config */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
                   Reconhecimento de Fala (Speech-to-Text)
@@ -1211,7 +1238,7 @@ export default function SettingsPage() {
                     onChange={(e) => setSttProvider(e.target.value)}
                     className="w-full appearance-none rounded-2xl bg-[#14141e] border border-white/15 px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
                   >
-                    <option value="web-speech">Web Speech API (Nativa do Navegador — Gratuita & Rápida)</option>
+                    <option value="web-speech">Web Speech API (Nativa do Navegador — Gratuita & Instantânea)</option>
                     <option value="whisper">OpenAI Whisper API</option>
                     <option value="groq">Groq Whisper (Ultra Baixa Latência)</option>
                   </select>
@@ -1219,25 +1246,11 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
-                    Síntese de Voz dos Tutores (Text-to-Speech)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                        const v = window.speechSynthesis.getVoices();
-                        setAvailableVoices(v);
-                      }
-                    }}
-                    className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer font-mono"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Recarregar vozes</span>
-                  </button>
-                </div>
+              {/* Tutor Voices Cards */}
+              <div className="space-y-3 pt-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/80 font-mono">
+                  Voz dos Tutores de Conversação
+                </label>
 
                 {voicesLoaded ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1246,12 +1259,12 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs shadow-sm">
                               GB
                             </div>
                             <div>
                               <h3 className="text-sm font-bold text-white leading-tight">Sarah (Tutora UK)</h3>
-                              <p className="text-[10px] text-zinc-400">Inglês Britânico</p>
+                              <p className="text-[10px] text-zinc-400">Inglês Britânico (Voz Feminina)</p>
                             </div>
                           </div>
                           {sarahVoice && (
@@ -1271,11 +1284,11 @@ export default function SettingsPage() {
                               onChange={(e) => setSarahVoice(e.target.value || null)}
                               className="w-full appearance-none rounded-xl bg-[#0d0d14] border border-white/15 px-3 py-2.5 pr-8 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
                             >
-                              <option value="">✨ Automática (Recomendada pelo Sistema)</option>
+                              <option value="">✨ Automática (Feminina Britânica Recomendada)</option>
                               
                               {/* UK Voices */}
                               {availableVoices.filter(v => v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") || v.name.toLowerCase().includes("uk") || v.name.toLowerCase().includes("british")).length > 0 && (
-                                <optgroup label="🇬🇧 Vozes Britânicas (Recomendadas p/ Sarah)">
+                                <optgroup label="🇬🇧 Vozes Britânicas (Recomendadas)">
                                   {availableVoices
                                     .filter(v => v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") || v.name.toLowerCase().includes("uk") || v.name.toLowerCase().includes("british"))
                                     .map(voice => (
@@ -1318,12 +1331,12 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          playPronunciation("Hello! I am Sarah, your British English tutor. Nice to speak with you.", 0.95, "en-GB", "sarah");
+                          playPronunciation("Hello! I am Sarah, your British English tutor. It is great to practice with you.", 0.95, "en-GB", "sarah");
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-black/40 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+                        className="w-full py-2 px-3 rounded-xl bg-black/50 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                       >
                         <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Ouvir Amostra da Sarah</span>
+                        <span>▶️ Ouvir Amostra da Sarah</span>
                       </button>
                     </div>
 
@@ -1332,7 +1345,7 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs shadow-sm">
                               US
                             </div>
                             <div>
@@ -1361,7 +1374,7 @@ export default function SettingsPage() {
                               
                               {/* US Voices */}
                               {availableVoices.filter(v => v.lang.toLowerCase().replace("_", "-").startsWith("en-us") || v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("american")).length > 0 && (
-                                <optgroup label="🇺🇸 Vozes Americanas (Recomendadas p/ Marcus)">
+                                <optgroup label="🇺🇸 Vozes Americanas (Recomendadas)">
                                   {availableVoices
                                     .filter(v => v.lang.toLowerCase().replace("_", "-").startsWith("en-us") || v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("american"))
                                     .map(voice => (
@@ -1404,12 +1417,12 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          playPronunciation("Hey, what's up? I'm Marcus, your American English coach. Let's do this!", 0.95, "en-US", "marcus");
+                          playPronunciation("Hey, what's up? I'm Marcus, your American English coach. Let's practice together!", 0.95, "en-US", "marcus");
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-black/40 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+                        className="w-full py-2 px-3 rounded-xl bg-black/50 hover:bg-amber-500/15 border border-white/10 hover:border-amber-400/40 text-amber-300 text-xs font-bold font-mono transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                       >
                         <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Ouvir Amostra do Marcus</span>
+                        <span>▶️ Ouvir Amostra do Marcus</span>
                       </button>
                     </div>
                   </div>
@@ -1419,205 +1432,110 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* Interactive Voice Explorer & Player for All Voices */}
+                {/* Direct & Simple Universal Voice Tester */}
                 {voicesLoaded && availableVoices.length > 0 && (
-                  <div className="pt-4 border-t border-white/10 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                          <Volume2 className="w-4 h-4 text-amber-400" />
-                          <span>🎧 Explorador & Testador de Todas as Vozes ({availableVoices.length})</span>
-                        </h3>
-                        <p className="text-[11px] text-zinc-400">
-                          Clique em qualquer voz para ouvir uma amostra imediata ou atribuí-la diretamente aos tutores.
-                        </p>
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#14141e] border border-amber-500/20 space-y-4 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-amber-400" />
+                        <h3 className="text-sm font-bold text-white">Testador Rápido de Qualquer Voz</h3>
+                      </div>
+                      <span className="text-[11px] font-mono text-zinc-400">
+                        Escolha uma voz para ouvir qualquer frase imediatamente
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Voice Select */}
+                      <div className="space-y-1">
+                        <label className="block text-[11px] text-zinc-300 font-mono">
+                          Escolher Voz para Testar
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={customTestVoice}
+                            onChange={(e) => setCustomTestVoice(e.target.value)}
+                            className="w-full appearance-none rounded-xl bg-[#0d0d14] border border-white/15 px-3 py-2.5 pr-8 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer shadow-inner"
+                          >
+                            <option value="">-- Selecione uma voz da lista --</option>
+                            {availableVoices.map((v) => (
+                              <option key={`tester-${v.name}`} value={v.name}>
+                                {v.name} ({v.lang})
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+                        </div>
                       </div>
 
-                      {/* Accent Category Tabs */}
-                      <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-                        {[
-                          { id: "all", label: "Todas" },
-                          { id: "uk", label: "🇬🇧 UK" },
-                          { id: "us", label: "🇺🇸 US" },
-                          { id: "other_en", label: "🌐 Inglês" },
-                          { id: "system", label: "💻 Todas" },
-                        ].map((cat) => (
+                      {/* Quick Assign Buttons */}
+                      <div className="space-y-1">
+                        <label className="block text-[11px] text-zinc-300 font-mono">
+                          Atribuir Voz Selecionada ao Tutor
+                        </label>
+                        <div className="flex items-center gap-2 pt-0.5">
                           <button
-                            key={cat.id}
                             type="button"
-                            onClick={() => setVoiceFilterCategory(cat.id as any)}
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all cursor-pointer shrink-0 ${
-                              voiceFilterCategory === cat.id
-                                ? "bg-amber-500 text-zinc-950 shadow-sm shadow-amber-500/20"
-                                : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white"
-                            }`}
+                            disabled={!customTestVoice}
+                            onClick={() => {
+                              if (customTestVoice) setSarahVoice(customTestVoice);
+                            }}
+                            className="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-amber-400/40 text-xs font-mono font-bold text-white transition-all cursor-pointer disabled:opacity-30 active:scale-95"
                           >
-                            {cat.label}
+                            🇬🇧 Definir p/ Sarah
                           </button>
-                        ))}
+                          <button
+                            type="button"
+                            disabled={!customTestVoice}
+                            onClick={() => {
+                              if (customTestVoice) setMarcusVoice(customTestVoice);
+                            }}
+                            className="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-amber-400/40 text-xs font-mono font-bold text-white transition-all cursor-pointer disabled:opacity-30 active:scale-95"
+                          >
+                            🇺🇸 Definir p/ Marcus
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Search Voice Input */}
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Buscar voz por nome ou idioma (ex: natural, google, david, jenny)..."
-                        value={voiceSearchQuery}
-                        onChange={(e) => setVoiceSearchQuery(e.target.value)}
-                        className="w-full bg-[#14141e] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
-                      />
-                      {voiceSearchQuery && (
+                    {/* Test Phrase Input & Speak Button */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] text-zinc-300 font-mono">
+                        Texto para Falar
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={customTestText}
+                          onChange={(e) => setCustomTestText(e.target.value)}
+                          placeholder="Digite qualquer texto em inglês para testar..."
+                          className="flex-1 rounded-xl bg-[#0d0d14] border border-white/15 px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400 shadow-inner"
+                        />
                         <button
                           type="button"
-                          onClick={() => setVoiceSearchQuery("")}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                          onClick={handlePlayCustomTest}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
+                            isPlayingCustomTest
+                              ? "bg-amber-500 text-zinc-950 shadow-amber-500/30 animate-pulse"
+                              : "bg-gradient-to-r from-amber-400 to-yellow-400 text-zinc-950 shadow-amber-500/20 hover:brightness-110"
+                          }`}
                         >
-                          ✕
+                          <Volume2 className="w-4 h-4" />
+                          <span>{isPlayingCustomTest ? "⏹️ Parar Áudio" : "▶️ Falar Texto"}</span>
                         </button>
-                      )}
+                      </div>
                     </div>
-
-                    {/* Filtered Voice List */}
-                    {(() => {
-                      const filtered = availableVoices.filter((v) => {
-                        const matchesQuery =
-                          !voiceSearchQuery.trim() ||
-                          v.name.toLowerCase().includes(voiceSearchQuery.toLowerCase()) ||
-                          v.lang.toLowerCase().includes(voiceSearchQuery.toLowerCase());
-
-                        if (!matchesQuery) return false;
-
-                        const isUK =
-                          v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
-                          v.name.toLowerCase().includes("uk") ||
-                          v.name.toLowerCase().includes("british");
-                        const isUS =
-                          v.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
-                          v.name.toLowerCase().includes("us") ||
-                          v.name.toLowerCase().includes("american");
-                        const isOtherEn = v.lang.toLowerCase().startsWith("en") && !isUK && !isUS;
-
-                        if (voiceFilterCategory === "uk") return isUK;
-                        if (voiceFilterCategory === "us") return isUS;
-                        if (voiceFilterCategory === "other_en") return isOtherEn;
-                        return true;
-                      });
-
-                      if (filtered.length === 0) {
-                        return (
-                          <div className="p-4 rounded-xl bg-white/5 text-center text-xs text-zinc-400">
-                            Nenhuma voz encontrada com o filtro atual.
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                          {filtered.map((voice) => {
-                            const isUK =
-                              voice.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
-                              voice.name.toLowerCase().includes("uk") ||
-                              voice.name.toLowerCase().includes("british");
-                            const isUS =
-                              voice.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
-                              voice.name.toLowerCase().includes("us") ||
-                              voice.name.toLowerCase().includes("american");
-                            const flag = isUK ? "🇬🇧" : isUS ? "🇺🇸" : voice.lang.toLowerCase().startsWith("en") ? "🌐" : "💻";
-                            const isPlaying = testingVoiceName === voice.name;
-                            const isSelectedSarah = sarahVoice === voice.name;
-                            const isSelectedMarcus = marcusVoice === voice.name;
-
-                            return (
-                              <div
-                                key={voice.name}
-                                className={`p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col xs:flex-row xs:items-center justify-between gap-2 ${
-                                  isPlaying
-                                    ? "bg-amber-500/15 border-amber-500/50 shadow-md shadow-amber-500/10"
-                                    : "bg-[#14141e] border-white/10 hover:border-white/20"
-                                }`}
-                              >
-                                <div className="min-w-0 flex items-center gap-2">
-                                  <span className="text-base shrink-0">{flag}</span>
-                                  <div className="min-w-0">
-                                    <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                                      <span>{voice.name}</span>
-                                      {voice.name.toLowerCase().includes("natural") && (
-                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
-                                          Natural
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="text-[10px] text-zinc-400 font-mono">
-                                      {voice.lang} {voice.localService ? "• Voz Local" : "• Voz Online"}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 shrink-0 self-end xs:self-auto">
-                                  {/* Test Voice Play/Stop Button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleTestSingleVoice(voice)}
-                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1 active:scale-95 ${
-                                      isPlaying
-                                        ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/30 animate-pulse"
-                                        : "bg-white/10 hover:bg-amber-500/20 text-amber-300 border border-white/10 hover:border-amber-400/40"
-                                    }`}
-                                    title={`Ouvir amostra de ${voice.name}`}
-                                  >
-                                    <Volume2 className="w-3.5 h-3.5" />
-                                    <span>{isPlaying ? "Parar" : "Testar"}</span>
-                                  </button>
-
-                                  {/* Assign to Sarah */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAssignVoice(voice.name, "sarah")}
-                                    className={`px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-0.5 active:scale-95 ${
-                                      isSelectedSarah
-                                        ? "bg-amber-500/30 text-amber-300 border border-amber-500/60"
-                                        : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10"
-                                    }`}
-                                    title="Definir esta voz para Sarah (UK)"
-                                  >
-                                    {isSelectedSarah ? "✓ Sarah" : "+ Sarah"}
-                                  </button>
-
-                                  {/* Assign to Marcus */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAssignVoice(voice.name, "marcus")}
-                                    className={`px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-0.5 active:scale-95 ${
-                                      isSelectedMarcus
-                                        ? "bg-amber-500/30 text-amber-300 border border-amber-500/60"
-                                        : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10"
-                                    }`}
-                                    title="Definir esta voz para Marcus (US)"
-                                  >
-                                    {isSelectedMarcus ? "✓ Marcus" : "+ Marcus"}
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
                   </div>
                 )}
 
-                {/* Explanatory Help Box */}
-                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs space-y-2 text-zinc-300">
+                {/* Helpful info box */}
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs space-y-1.5 text-zinc-300">
                   <div className="font-bold text-amber-300 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Como funcionam as vozes e como adicionar novas?</span>
+                    <span>Dica sobre Vozes Naturais no Windows / Edge / Chrome</span>
                   </div>
-                  <p className="leading-relaxed text-zinc-400">
-                    As vozes são fornecidas diretamente pelo seu navegador e sistema operacional (ex: <strong>Microsoft Natural Voices no Edge/Windows</strong>, <strong>Google Voices no Chrome</strong> ou <strong>Siri no Safari/Mac</strong>).
-                  </p>
-                  <p className="leading-relaxed text-zinc-400">
-                    💡 <em>Dica:</em> No Windows, você pode instalar gratuitamente novas vozes naturais em inglês indo em <strong>Configurações do Windows &gt; Hora e Idioma &gt; Fala &gt; Adicionar Vozes</strong> (ex: English United States / English United Kingdom). No Microsoft Edge, as vozes online como &quot;Jenny Natural&quot; e &quot;Guy Natural&quot; são ativadas automaticamente.
+                  <p className="leading-relaxed text-zinc-400 text-[11px]">
+                    No <strong>Microsoft Edge</strong>, as vozes ultra-naturais da nuvem (como <em>Jenny Natural</em> e <em>Guy Natural</em>) funcionam automaticamente. No <strong>Windows</strong>, você também pode baixar pacotes de voz adicionais em <em>Configurações do Windows &gt; Hora e Idioma &gt; Fala</em>.
                   </p>
                 </div>
               </div>

@@ -131,15 +131,16 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 ---
 
 ## 🎙️ 12. Estúdio de Voz & Sintetizadores TTS Avançados (Web Speech API)
-* **Arquitetura em 2 Camadas no Estúdio de Conversação (`talk/page.tsx`):**
-  - Camada 1 (Ações Principais): Seletores de Persona (GB/US), Tópico com dropdown truncado e botões de ação à direita (**Esticar Tela / Modo Foco**, Exportar MD, Esqueci e Concluir).
-  - Camada 2 (Áudio Dedicado): Timer de conversação ativo, Visualizador de ondas de áudio em tempo real e botão de Mudo/Voz Ativa.
-  - Eliminação definitiva de qualquer quebra ou corte visual do botão de Esticar Tela (`Maximize2` / `Minimize2`) em qualquer resolução ou zoom.
-* **Explorador & Testador Completo de Todas as Vozes (`settings/page.tsx` & `src/lib/audio.ts`):**
-  - Captura assíncrona contínua via `voiceschanged` + polling inicial para todos os browsers.
-  - **Catálogo Interativo de Vozes:** Lista todas as vozes do sistema operacional/navegador com filtros por sotaque (🇬🇧 UK, 🇺🇸 US, 🌐 Inglês Global, 💻 Sistema) e busca em tempo real.
-  - **Player de Teste de Voz:** Botão `▶️ Testar` individual para ouvir imediatamente qualquer voz instalada com amostras nativas.
-  - **Atribuição Rápida:** Botões `✓ Sarah` e `✓ Marcus` direto em cada card de voz para definir o tutor com 1 clique.
+* **Arquitetura 100% Contida no Estúdio de Conversação (`talk/page.tsx`):**
+  - Eliminação de qualquer margem negativa (`-mx`, `-mb`) que pudesse causar transbordo de elementos ou botões fora do card em qualquer largura de tela.
+  - Barra de controle dividida harmoniosamente em dois níveis:
+    - Nível 1: Persona (Sarah/Marcus), Tópico com dropdown inteligente e Botões de Ação (**Esticar Tela / Modo Foco**, Exportar MD e Concluir).
+    - Nível 2: Cronômetro de fala, visualizador de áudio em tempo real, Dica rápida e botão de alternância **Voz Ativa / Mudo**.
+* **Configurações de Voz Limpas e Objetivas (`settings/page.tsx` & `src/lib/audio.ts`):**
+  - **Botão Recarregar Vozes:** Função reativa com debounce e animação `spin` que força a captura e o refresh das vozes nativas instaladas no computador com feedback visual `✓ Vozes Atualizadas!`.
+  - **Seletores Diretos da Sarah e Marcus:** Cada tutor possui seu card individual com seletor categorizado e botão `▶️ Ouvir Amostra` direto.
+  - **Testador Rápido de Qualquer Voz:** Caixa intuitiva onde o usuário escolhe qualquer voz do sistema, digita ou usa o texto padrão e clica em `▶️ Falar Texto` para testar instantaneamente, com botões para atribuir a voz diretamente à Sarah ou ao Marcus.
+  - **Correção de Gênero:** Marcus prioriza estritamente vozes masculinas no modo automático e a Sarah prioriza vozes femininas britânicas.
 
 ---
 
