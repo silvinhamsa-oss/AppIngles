@@ -107,6 +107,9 @@ export default function SettingsPage() {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [voiceSaveSuccess, setVoiceSaveSuccess] = useState(false);
+  const [testingVoiceName, setTestingVoiceName] = useState<string | null>(null);
+  const [voiceSearchQuery, setVoiceSearchQuery] = useState("");
+  const [voiceFilterCategory, setVoiceFilterCategory] = useState<"all" | "uk" | "us" | "other_en" | "system">("all");
 
   // Biometrics States
   const [bioAvailable, setBioAvailable] = useState(false);
@@ -524,6 +527,50 @@ export default function SettingsPage() {
 
     setVoiceSaveSuccess(true);
     setTimeout(() => setVoiceSaveSuccess(false), 3000);
+  };
+
+  const handleTestSingleVoice = (voice: SpeechSynthesisVoice) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+
+    if (testingVoiceName === voice.name) {
+      setTestingVoiceName(null);
+      return;
+    }
+
+    setTestingVoiceName(voice.name);
+    const isUK =
+      voice.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
+      voice.name.toLowerCase().includes("uk") ||
+      voice.name.toLowerCase().includes("british");
+    const isUS =
+      voice.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
+      voice.name.toLowerCase().includes("us") ||
+      voice.name.toLowerCase().includes("american");
+
+    const samplePhrase = isUK
+      ? `Hello! This is a test sample of ${voice.name} in British English.`
+      : isUS
+      ? `Hey there! This is a test sample of ${voice.name} in American English.`
+      : `Hello! Testing ${voice.name} (${voice.lang}). Welcome to English Lab!`;
+
+    const utterance = new SpeechSynthesisUtterance(samplePhrase);
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = 0.95;
+
+    utterance.onend = () => setTestingVoiceName(null);
+    utterance.onerror = () => setTestingVoiceName(null);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleAssignVoice = (voiceName: string, target: "sarah" | "marcus") => {
+    if (target === "sarah") {
+      setSarahVoice(voiceName);
+    } else {
+      setMarcusVoice(voiceName);
+    }
   };
 
   const handleToggleBiometrics = async () => {
@@ -1387,6 +1434,194 @@ export default function SettingsPage() {
                 ) : (
                   <div className="text-xs text-center text-zinc-400 py-6 border border-dashed border-white/10 rounded-2xl">
                     Carregando sintetizadores de voz disponíveis no seu navegador...
+                  </div>
+                )}
+
+                {/* Interactive Voice Explorer & Player for All Voices */}
+                {voicesLoaded && availableVoices.length > 0 && (
+                  <div className="pt-4 border-t border-white/10 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          <Volume2 className="w-4 h-4 text-amber-400" />
+                          <span>🎧 Explorador & Testador de Todas as Vozes ({availableVoices.length})</span>
+                        </h3>
+                        <p className="text-[11px] text-zinc-400">
+                          Clique em qualquer voz para ouvir uma amostra imediata ou atribuí-la diretamente aos tutores.
+                        </p>
+                      </div>
+
+                      {/* Accent Category Tabs */}
+                      <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                        {[
+                          { id: "all", label: "Todas" },
+                          { id: "uk", label: "🇬🇧 UK" },
+                          { id: "us", label: "🇺🇸 US" },
+                          { id: "other_en", label: "🌐 Inglês" },
+                          { id: "system", label: "💻 Todas" },
+                        ].map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setVoiceFilterCategory(cat.id as any)}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all cursor-pointer shrink-0 ${
+                              voiceFilterCategory === cat.id
+                                ? "bg-amber-500 text-zinc-950 shadow-sm shadow-amber-500/20"
+                                : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white"
+                            }`}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Search Voice Input */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Buscar voz por nome ou idioma (ex: natural, google, david, jenny)..."
+                        value={voiceSearchQuery}
+                        onChange={(e) => setVoiceSearchQuery(e.target.value)}
+                        className="w-full bg-[#14141e] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+                      />
+                      {voiceSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setVoiceSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filtered Voice List */}
+                    {(() => {
+                      const filtered = availableVoices.filter((v) => {
+                        const matchesQuery =
+                          !voiceSearchQuery.trim() ||
+                          v.name.toLowerCase().includes(voiceSearchQuery.toLowerCase()) ||
+                          v.lang.toLowerCase().includes(voiceSearchQuery.toLowerCase());
+
+                        if (!matchesQuery) return false;
+
+                        const isUK =
+                          v.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
+                          v.name.toLowerCase().includes("uk") ||
+                          v.name.toLowerCase().includes("british");
+                        const isUS =
+                          v.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
+                          v.name.toLowerCase().includes("us") ||
+                          v.name.toLowerCase().includes("american");
+                        const isOtherEn = v.lang.toLowerCase().startsWith("en") && !isUK && !isUS;
+
+                        if (voiceFilterCategory === "uk") return isUK;
+                        if (voiceFilterCategory === "us") return isUS;
+                        if (voiceFilterCategory === "other_en") return isOtherEn;
+                        return true;
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="p-4 rounded-xl bg-white/5 text-center text-xs text-zinc-400">
+                            Nenhuma voz encontrada com o filtro atual.
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {filtered.map((voice) => {
+                            const isUK =
+                              voice.lang.toLowerCase().replace("_", "-").startsWith("en-gb") ||
+                              voice.name.toLowerCase().includes("uk") ||
+                              voice.name.toLowerCase().includes("british");
+                            const isUS =
+                              voice.lang.toLowerCase().replace("_", "-").startsWith("en-us") ||
+                              voice.name.toLowerCase().includes("us") ||
+                              voice.name.toLowerCase().includes("american");
+                            const flag = isUK ? "🇬🇧" : isUS ? "🇺🇸" : voice.lang.toLowerCase().startsWith("en") ? "🌐" : "💻";
+                            const isPlaying = testingVoiceName === voice.name;
+                            const isSelectedSarah = sarahVoice === voice.name;
+                            const isSelectedMarcus = marcusVoice === voice.name;
+
+                            return (
+                              <div
+                                key={voice.name}
+                                className={`p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col xs:flex-row xs:items-center justify-between gap-2 ${
+                                  isPlaying
+                                    ? "bg-amber-500/15 border-amber-500/50 shadow-md shadow-amber-500/10"
+                                    : "bg-[#14141e] border-white/10 hover:border-white/20"
+                                }`}
+                              >
+                                <div className="min-w-0 flex items-center gap-2">
+                                  <span className="text-base shrink-0">{flag}</span>
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                                      <span>{voice.name}</span>
+                                      {voice.name.toLowerCase().includes("natural") && (
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                                          Natural
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[10px] text-zinc-400 font-mono">
+                                      {voice.lang} {voice.localService ? "• Voz Local" : "• Voz Online"}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0 self-end xs:self-auto">
+                                  {/* Test Voice Play/Stop Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTestSingleVoice(voice)}
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1 active:scale-95 ${
+                                      isPlaying
+                                        ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/30 animate-pulse"
+                                        : "bg-white/10 hover:bg-amber-500/20 text-amber-300 border border-white/10 hover:border-amber-400/40"
+                                    }`}
+                                    title={`Ouvir amostra de ${voice.name}`}
+                                  >
+                                    <Volume2 className="w-3.5 h-3.5" />
+                                    <span>{isPlaying ? "Parar" : "Testar"}</span>
+                                  </button>
+
+                                  {/* Assign to Sarah */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAssignVoice(voice.name, "sarah")}
+                                    className={`px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-0.5 active:scale-95 ${
+                                      isSelectedSarah
+                                        ? "bg-amber-500/30 text-amber-300 border border-amber-500/60"
+                                        : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10"
+                                    }`}
+                                    title="Definir esta voz para Sarah (UK)"
+                                  >
+                                    {isSelectedSarah ? "✓ Sarah" : "+ Sarah"}
+                                  </button>
+
+                                  {/* Assign to Marcus */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAssignVoice(voice.name, "marcus")}
+                                    className={`px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-0.5 active:scale-95 ${
+                                      isSelectedMarcus
+                                        ? "bg-amber-500/30 text-amber-300 border border-amber-500/60"
+                                        : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10"
+                                    }`}
+                                    title="Definir esta voz para Marcus (US)"
+                                  >
+                                    {isSelectedMarcus ? "✓ Marcus" : "+ Marcus"}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

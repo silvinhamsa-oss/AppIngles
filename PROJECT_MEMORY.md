@@ -131,14 +131,15 @@ Este documento consolida a arquitetura, decisões técnicas, regras de seguranç
 ---
 
 ## 🎙️ 12. Estúdio de Voz & Sintetizadores TTS Avançados (Web Speech API)
-* **Responsividade do Estúdio de Conversação (`talk/page.tsx`):**
-  - Barra de controle superior modularizada com contenção total (`overflow-hidden`, truncamento inteligente de títulos).
-  - Botão de **Esticar Tela / Modo Foco** (`Maximize2` / `Minimize2`) ajustado para se manter sempre visível e perfeitamente contido dentro do card, sem estourar as margens laterais.
-* **Carregamento Reativo e Seleção de Vozes (`settings/page.tsx` & `src/lib/audio.ts`):**
-  - Captura assíncrona de sintetizadores via evento `voiceschanged` + polling inicial para todos os navegadores (Chrome, Edge, Safari, Firefox).
-  - Agrupamento inteligente de vozes por sotaque: 🇬🇧 *Britânicas (Sarah)*, 🇺🇸 *Americanas (Marcus)*, 🌐 *Outras Vozes em Inglês* e 💻 *Vozes do Sistema*.
-  - Botão de **"Ouvir Amostra"** em tempo real para testar a sonoridade antes de salvar.
-  - Painel explicativo com instruções para instalação gratuita de vozes adicionais ultra-naturais no Windows.
+* **Arquitetura em 2 Camadas no Estúdio de Conversação (`talk/page.tsx`):**
+  - Camada 1 (Ações Principais): Seletores de Persona (GB/US), Tópico com dropdown truncado e botões de ação à direita (**Esticar Tela / Modo Foco**, Exportar MD, Esqueci e Concluir).
+  - Camada 2 (Áudio Dedicado): Timer de conversação ativo, Visualizador de ondas de áudio em tempo real e botão de Mudo/Voz Ativa.
+  - Eliminação definitiva de qualquer quebra ou corte visual do botão de Esticar Tela (`Maximize2` / `Minimize2`) em qualquer resolução ou zoom.
+* **Explorador & Testador Completo de Todas as Vozes (`settings/page.tsx` & `src/lib/audio.ts`):**
+  - Captura assíncrona contínua via `voiceschanged` + polling inicial para todos os browsers.
+  - **Catálogo Interativo de Vozes:** Lista todas as vozes do sistema operacional/navegador com filtros por sotaque (🇬🇧 UK, 🇺🇸 US, 🌐 Inglês Global, 💻 Sistema) e busca em tempo real.
+  - **Player de Teste de Voz:** Botão `▶️ Testar` individual para ouvir imediatamente qualquer voz instalada com amostras nativas.
+  - **Atribuição Rápida:** Botões `✓ Sarah` e `✓ Marcus` direto em cada card de voz para definir o tutor com 1 clique.
 
 ---
 
