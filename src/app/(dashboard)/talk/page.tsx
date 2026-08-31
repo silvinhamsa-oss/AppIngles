@@ -480,135 +480,152 @@ export default function TalkPage() {
       className={
         isFocusMode
           ? "fixed inset-0 z-50 bg-[#050507] p-3 sm:p-6 flex flex-col justify-between overflow-hidden"
-          : "h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto"
+          : "h-[calc(100dvh-8rem)] lg:h-[calc(100vh-8.5rem)] flex flex-col space-y-2.5 sm:space-y-3 max-w-5xl mx-auto w-full min-h-0"
       }
     >
       {/* Studio Audio Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {/* Persona selector toggle */}
-          <button
-            onClick={() => setPersona(persona === "sarah" ? "marcus" : "sarah")}
-            className="flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer shrink-0"
-            title="Alternar entre Sarah (UK) e Marcus (US)"
-          >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
-              {persona === "sarah" ? "GB" : "US"}
-            </div>
-            <div className="text-left hidden xs:block sm:block pr-1 sm:pr-2">
-              <div className="text-[11px] sm:text-xs font-bold text-white leading-tight">
-                {persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-3xl bg-[#0d0d14] border border-amber-500/30 shadow-lg shrink-0 overflow-hidden">
+        {/* Left Section: Persona & Topic */}
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 min-w-0 w-full lg:w-auto">
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Persona selector toggle */}
+            <button
+              onClick={() => setPersona(persona === "sarah" ? "marcus" : "sarah")}
+              className="flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/50 transition-all cursor-pointer shrink-0 active:scale-95"
+              title="Alternar entre Sarah (UK) e Marcus (US)"
+            >
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-black text-zinc-950 text-xs">
+                {persona === "sarah" ? "GB" : "US"}
               </div>
-              <div className="text-[9px] sm:text-[10px] text-zinc-400">Clique p/ trocar</div>
-            </div>
-          </button>
+              <div className="text-left hidden xs:block pr-1 sm:pr-2">
+                <div className="text-[11px] sm:text-xs font-bold text-white leading-tight">
+                  {persona === "sarah" ? "Sarah (UK)" : "Marcus (US)"}
+                </div>
+                <div className="text-[9px] sm:text-[10px] text-zinc-400">Clique p/ trocar</div>
+              </div>
+            </button>
 
-          {/* Topic Selector Button */}
-          <button
-            onClick={() => setIsTopicModalOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group min-w-0"
-          >
-            <Layers className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110" />
-            <div className="min-w-0">
-              <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1">
-                <span className="truncate max-w-[90px] xs:max-w-[130px] sm:max-w-none">{selectedTopic.title}</span>
-                <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
+            {/* Topic Selector Button */}
+            <button
+              onClick={() => setIsTopicModalOpen(true)}
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-left transition-all cursor-pointer group min-w-0 max-w-[180px] xs:max-w-[240px] sm:max-w-xs active:scale-95"
+            >
+              <Layers className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1">
+                  <span className="truncate">{selectedTopic.title}</span>
+                  <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
+                </div>
+                <div className="text-[9px] sm:text-[10px] text-zinc-400 font-mono truncate">
+                  Nível {selectedTopic.level} • {selectedTopic.mode}
+                </div>
               </div>
-              <div className="text-[9px] sm:text-[10px] text-zinc-400 font-mono truncate">
-                Nível {selectedTopic.level} • {selectedTopic.mode}
-              </div>
-            </div>
-          </button>
+            </button>
+          </div>
 
           {/* Create Custom Scenario Button */}
           <button
             type="button"
             onClick={() => setIsCustomScenarioOpen(true)}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-bold transition-all cursor-pointer shrink-0 active:scale-95"
             title="Criar Cenário Customizado"
           >
             <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">Criar Cenário</span>
+            <span className="hidden sm:inline">Criar Cenário</span>
           </button>
         </div>
 
-        {/* Timer, Live Visualizer and Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Active Speaking Timer */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 text-white text-[11px] sm:text-xs font-mono font-bold">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span>{formatTimer(secondsElapsed)}</span>
+        {/* Right Section: Timer, Visualizer, Mode Toggles and Action Controls */}
+        <div className="flex items-center justify-between lg:justify-end gap-1.5 sm:gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap border-t lg:border-t-0 border-white/5 pt-2 lg:pt-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Active Speaking Timer */}
+            <div className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 text-white text-[11px] sm:text-xs font-mono font-bold shrink-0">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>{formatTimer(secondsElapsed)}</span>
+            </div>
+
+            <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
+
+            {/* Audio Auto-Play / Mute Button */}
+            <button
+              onClick={handleToggleMute}
+              className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 active:scale-95 ${
+                autoPlayAudio
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm shadow-amber-500/10"
+                  : "bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200"
+              }`}
+              title={autoPlayAudio ? "Áudio automático ativado (clique para mutar)" : "Modo Mudo ativado (somente leitura de texto)"}
+            >
+              {autoPlayAudio ? (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span className="hidden xs:inline font-mono">Audio On</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="hidden xs:inline font-mono">Muted</span>
+                </>
+              )}
+            </button>
+
+            {/* Export Transcript Button */}
+            <button
+              type="button"
+              onClick={handleExportChatHistory}
+              disabled={messages.length <= 1}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-30 shrink-0 active:scale-95"
+              title="Exportar Conversa em Markdown (.MD)"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Focus Mode / Fullscreen Button (Esticar Tela) */}
+            <button
+              type="button"
+              onClick={() => setIsFocusMode(!isFocusMode)}
+              className={`h-7 sm:h-8 px-2 rounded-xl border transition-all flex items-center gap-1 cursor-pointer shrink-0 active:scale-95 ${
+                isFocusMode
+                  ? "bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/30 font-bold text-xs"
+                  : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border-white/10 text-xs"
+              }`}
+              title={isFocusMode ? "Sair da Tela Cheia (Modo Foco)" : "Esticar Tela / Modo Foco (Imersão Total)"}
+            >
+              {isFocusMode ? (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden xs:inline font-semibold text-[11px]">Reduzir</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden xs:inline font-semibold text-[11px]">Esticar</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <AudioVisualizer isActive={isAiSpeaking || isRecording || isGenerating} variant={isRecording ? "emerald" : "amber"} />
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleForgotWord}
+              className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-[11px] sm:text-xs h-7 sm:h-8 px-2 sm:px-2.5 hidden md:flex"
+            >
+              <HelpCircle className="w-3.5 h-3.5 mr-1" />
+              <span>Esqueci</span>
+            </Button>
 
-          {/* Audio Auto-Play / Mute Button */}
-          <button
-            onClick={handleToggleMute}
-            className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              autoPlayAudio
-                ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm shadow-amber-500/10"
-                : "bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200"
-            }`}
-            title={autoPlayAudio ? "Áudio automático ativado (clique para mutar)" : "Modo Mudo ativado (somente leitura de texto)"}
-          >
-            {autoPlayAudio ? (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span className="hidden sm:inline font-mono">Audio On</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="hidden sm:inline font-mono">Muted</span>
-              </>
-            )}
-          </button>
-
-          {/* Export Transcript Button */}
-          <button
-            type="button"
-            onClick={handleExportChatHistory}
-            disabled={messages.length <= 1}
-            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-30"
-            title="Exportar Conversa em Markdown (.MD)"
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Focus Mode Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setIsFocusMode(!isFocusMode)}
-            className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
-              isFocusMode
-                ? "bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/30"
-                : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border-white/10"
-            }`}
-            title={isFocusMode ? "Sair do Modo Foco" : "Ativar Modo Foco (Imersão Total)"}
-          >
-            {isFocusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleForgotWord}
-            className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs hidden lg:flex"
-          >
-            <HelpCircle className="w-3.5 h-3.5 mr-1" />
-            <span>Esqueci</span>
-          </Button>
-
-          {/* End Session Button */}
-          <button
-            onClick={handleEndSession}
-            disabled={isEvaluating || messages.length <= 1}
-            className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-[11px] sm:text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 active:scale-95"
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>{isEvaluating ? "..." : "Concluir"}</span>
-          </button>
+            {/* End Session Button */}
+            <button
+              onClick={handleEndSession}
+              disabled={isEvaluating || messages.length <= 1}
+              className="px-2.5 sm:px-3.5 h-7 sm:h-8 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 text-[11px] sm:text-xs font-black tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 active:scale-95 shrink-0"
+            >
+              <Award className="w-3.5 h-3.5" />
+              <span>{isEvaluating ? "..." : "Concluir"}</span>
+            </button>
+          </div>
         </div>
       </div>
 
